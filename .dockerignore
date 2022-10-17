@@ -1,0 +1,6 @@
+.git/
+data/
+logs/
+*.tar
+*.log
+*.txt
