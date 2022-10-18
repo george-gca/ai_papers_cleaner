@@ -320,6 +320,7 @@ class TextCleaner():
         ]
 
         self._symbols_dict = {
+            '∼' : '~',
             '–': '-',
             '−': '-',
             'ꟻ': 'F',
@@ -725,27 +726,35 @@ class TextCleaner():
 
         return text
 
-    def remove_before_title(self, text: str, title: str) -> str:
-        title_split = title.strip().lower().split()
-        # use first 2 words if it has
-        if len(title_split) >= 2:
+    def remove_before_title(self, text: str, title: str, ignore_case=False) -> str:
+        title_split = title.strip().split()
+        # use first 3 words if it has
+        if len(title_split) >= 3:
+            first_words_of_title = ' '.join(title_split[:3])
+        elif len(title_split) >= 2:
             first_words_of_title = ' '.join(title_split[:2])
         else:
             first_words_of_title = title_split[0]
 
         self._logger.debug(
             f'\n{Fore.GREEN}###########################{Fore.RESET}\n\nRemoving text before title:')
-        end = text.lower().find(first_words_of_title)
+
+        if ignore_case:
+            end = text.lower().find(first_words_of_title.lower())
+        else:
+            end = text.find(first_words_of_title)
 
         if end > 0:
             return self.remove_text_between_positions(text, to_position=end)
         else:
             return text
 
-    def remove_between_title_abstract(self, text: str, title: str, end_word: str = 'abstract') -> str:
-        title_split = title.strip().lower().split()
-        # use last 2 words if it has
-        if len(title_split) >= 2:
+    def remove_between_title_abstract(self, text: str, title: str, end_word: str = 'abstract', ignore_case=False) -> str:
+        title_split = title.strip().split()
+        # use last 3 words if it has
+        if len(title_split) >= 3:
+            last_words_of_title = ' '.join(title_split[-3:])
+        elif len(title_split) >= 2:
             last_words_of_title = ' '.join(title_split[-2:])
         else:
             last_words_of_title = title_split[0]
@@ -754,10 +763,14 @@ class TextCleaner():
             f'\n{Fore.GREEN}###########################{Fore.RESET}\n\nRemoving text between title and abstract, '
             f'delimited by "{last_words_of_title}" and "{end_word}":')
 
-        lower_text = text.lower()
-
-        start = lower_text.find(last_words_of_title) + len(last_words_of_title)
-        end = lower_text[start:].find(end_word) + start + len(end_word)
+        if ignore_case:
+            lower_text = text.lower()
+            last_words_of_title = last_words_of_title.lower()
+            start = lower_text.find(last_words_of_title) + len(last_words_of_title)
+            end = lower_text[start:].find(end_word) + start + len(end_word)
+        else:
+            start = text.find(last_words_of_title) + len(last_words_of_title)
+            end = text[start:].find(end_word) + start + len(end_word)
 
         return self.remove_text_between_positions(text, start, end)
 
@@ -814,11 +827,15 @@ class TextCleaner():
         regex = self._regexes['remove_emails']
         return self._run_regex(text, regex, ' ')
 
-    def remove_first_word_occurrence(self, text: str, word: str) -> str:
+    def remove_first_word_occurrence(self, text: str, word: str, ignore_case=False) -> str:
         self._logger.debug(
             f'\n{Fore.GREEN}###########################{Fore.RESET}\n\nRemoving first occurrence of "{word}":')
 
-        index = text.find(word)
+        if ignore_case:
+            index = text.lower().find(word.lower())
+        else:
+            index = text.find(word)
+
         if index >= 0:
             if self._logger.isEnabledFor(logging.DEBUG):
                 tmp_text = text[:index] + BG_HIGHLIGHT_COLOR + word + Back.RESET + text[index + len(word):]
@@ -843,11 +860,11 @@ class TextCleaner():
 
         return self._run_regex(text, regex, '\\1')
 
-    def remove_from_word_to_end(self, text: str, from_word: str) -> str:
+    def remove_from_word_to_end(self, text: str, from_word: str, ignore_case=False) -> str:
         self._logger.debug(
             f'\n{Fore.GREEN}###########################{Fore.RESET}\n\nRemoving from {from_word} to end of text:')
 
-        match = re.search(f'[.\\n\s]+{from_word[::-1]}[.\s\\n\d]+', text[::-1])
+        match = re.search(f'[.\\n\s]+{from_word[::-1]}[.\s\\n\d]+', text[::-1], re.IGNORECASE if ignore_case else 0)
         if match != None:
             return self.remove_text_between_positions(text, -match.end()).strip()
         else:
@@ -872,19 +889,21 @@ class TextCleaner():
         regex = self._regexes['remove_item_citation']
         return self._run_regex(text, regex, ' ')
 
-    def remove_last_word_occurrence(self, text: str, word: str) -> str:
+    def remove_last_word_occurrence(self, text: str, word: str, ignore_case=False) -> str:
         self._logger.debug(
             f'\n{Fore.GREEN}###########################{Fore.RESET}\n\nRemoving last occurrence of "{word}":')
 
-        inverted_text = text[::-1]
-        index = inverted_text.find(word[::-1])
+        if ignore_case:
+            index = text.lower().rfind(word.lower())
+        else:
+            index = text.rfind(word)
+
         if index >= 0:
             if self._logger.isEnabledFor(logging.DEBUG):
-                tmp_text = inverted_text[:index] + Back.RESET + word[::-1] + BG_HIGHLIGHT_COLOR + inverted_text[index + len(word):]
-                self._logger.debug(tmp_text[::-1])
+                tmp_text = text[:index] + BG_HIGHLIGHT_COLOR + word + Back.RESET + text[index + len(word):]
+                self._logger.debug(tmp_text)
 
-            inverted_text = inverted_text[:index] + inverted_text[index + len(word):]
-            return inverted_text[::-1]
+            return text[:index] + text[index + len(word):]
         else:
             self._logger.debug('Text kept the same')
             return text
