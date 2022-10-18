@@ -18,7 +18,7 @@ pandas = "^1.5.0"
 pyenchant = "^3.2.2"
 pypdfium2 = "^3.4.0"
 tqdm = "^4.64.1"
-inflect = {git = "https://github.com/george-gca/inflect"}
+inflect = {git = "https://github.com/george-gca/inflect", branch = "main" }
 
 
 [build-system]
