@@ -11,7 +11,6 @@ packages = [{include = "ai_papers_cleaner"}]
 python = "^3.10"
 colorama = "^0.4.5"
 ftfy = "^6.1.1"
-ipdb = "^0.13.9"
 ipython = "^8.5.0"
 nltk = "^3.7"
 pandas = "^1.5.0"
@@ -19,6 +18,7 @@ pyenchant = "^3.2.2"
 pypdfium2 = "^3.4.0"
 tqdm = "^4.64.1"
 inflect = {git = "https://github.com/george-gca/inflect", branch = "main" }
+pyarrow = "^9.0.0"
 
 
 [build-system]
