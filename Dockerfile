@@ -52,6 +52,7 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
         ipython \
         nltk \
         pandas \
+        pyarrow \
         pyenchant \
         pypdfium2 \
         tqdm && \

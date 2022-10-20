@@ -11,7 +11,7 @@ conferences=(
     # "aaai 2020"
     # "aaai 2021"
     # "aaai 2022"
-    "acl 2017"
+    # "acl 2017"
     # "acl 2018"
     # "acl 2019"
     # "acl 2020"
@@ -100,10 +100,12 @@ conferences=(
 
 paper_separator='<#sep#>'
 
-extract_pdfs=1
-extract_urls=1
-clean_abstracts=1
-clean_papers=1
+# extract_pdfs=1
+# extract_urls=1
+# clean_abstracts=1
+# clean_papers=1
+# unify_papers=1
+papers_with_code=1
 
 abstract_only_conferences=(
     "kdd"
@@ -137,3 +139,12 @@ for conference in "${conferences[@]}"; do
         $run_command python text_cleaner.py -f data/${conf_year[0]}/${conf_year[1]}/pdfs.csv -s "$paper_separator" -l info
     fi
 done
+
+if [ -n "$unify_papers" ]; then
+	$run_command python unify_papers_data.py
+fi
+
+if [ -n "$papers_with_code" ]; then
+    echo -e "\nAdding information from papers with code"
+    $run_command python add_papers_with_code.py
+fi
