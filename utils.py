@@ -104,102 +104,11 @@ supported_conferences = [
 ]
 
 
-conferences_pdfs = [c for c in supported_conferences if not c.startswith('kdd') and not c.startswith('sigchi')]
-
-
 def parallelize_dataframe(df: pd.DataFrame, func: Callable, n_processes: int = cpu_count() // 4) -> pd.DataFrame:
     df_split = np.array_split(df, n_processes)
     results = process_map(func, df_split, max_workers=n_processes)
     df = pd.concat(results)
     return df
-
-
-def recreate_url(url_str: str, conference: str, year: int, is_abstract: bool = False) -> str:
-    if url_str == None or len(url_str) == 0:
-        return ''
-
-    if url_str.startswith('http://') or url_str.startswith('https://'):
-        return url_str
-
-    conference_lower = conference.lower()
-    supported_conferences_names = set(
-        [c.split('/')[0] for c in supported_conferences] + ['arxiv'])
-    assert conference_lower in supported_conferences_names, f'conference is {conference}'
-
-    if conference_lower == 'aaai':
-        if year <= 2018:
-            return f'https://www.aaai.org/ocs/index.php/AAAI/AAAI{year % 2000}/paper/viewPaper/{url_str}'
-        else:
-            return f'https://ojs.aaai.org/index.php/AAAI/article/view/{url_str}'
-
-    # acl conferences
-    elif conference_lower in {'acl', 'coling', 'eacl', 'emnlp', 'findings', 'ijcnlp', 'naacl', 'sigdial', 'tacl'}:
-        return f'https://aclanthology.org/{url_str}'
-
-    # arxiv
-    elif conference_lower == 'arxiv':
-        if is_abstract:
-            url_type = 'abs'
-            url_ext = ''
-        else:
-            url_type = 'pdf'
-            url_ext = '.pdf'
-
-        return f'https://arxiv.org/{url_type}/{url_str}{url_ext}'
-
-    # thecvf conferences
-    elif conference_lower in {'cvpr', 'iccv', 'wacv'}:
-        return f'https://openaccess.thecvf.com/{url_str}'
-
-    elif conference_lower == 'eccv':
-        if is_abstract:
-            url_type = 'html'
-            url_ext = '.php'
-        else:
-            url_type = 'papers'
-            url_ext = '.pdf'
-
-        return f'https://www.ecva.net/papers/eccv_{year}/papers_ECCV/{url_type}/{url_str}{url_ext}'
-
-    elif conference_lower in {'iclr', 'neurips_workshop'}:
-        if is_abstract:
-            url_type = 'forum'
-        else:
-            url_type = 'pdf'
-
-        return f'https://openreview.net/{url_type}?id={url_str}'
-
-    elif conference_lower == 'icml':
-        if is_abstract:
-            url_ext = '.html'
-        else:
-            url_ext = f'/{url_str.split("/")[1]}.pdf'
-
-        return f'http://proceedings.mlr.press/{url_str}{url_ext}'
-
-    elif conference_lower == 'ijcai':
-        return f'https://www.ijcai.org/proceedings/{year}/{url_str}'
-
-    elif conference_lower == 'kdd':
-        if year == 2017:
-            return f'https://www.kdd.org/kdd{year}/papers/view/{url_str}'
-        elif year == 2018 or year == 2020:
-            return f'https://www.kdd.org/kdd{year}/accepted-papers/view/{url_str}'
-        else: # if year == 2021:
-            return f'https://dl.acm.org/doi/abs/{url_str}'
-
-    elif conference_lower == 'neurips':
-        if is_abstract:
-            url_type = 'hash'
-        else:
-            url_type = 'file'
-
-        return f'https://papers.nips.cc/paper/{year}/{url_type}/{url_str}'
-
-    elif conference_lower == 'sigchi':
-        return f'https://dl.acm.org/doi/abs/{url_str}'
-
-    return url_str
 
 
 def setup_log(args: argparse.Namespace, log_file: Union[str, Path] = Path('run.log'), file_log_level: int = logging.INFO, logs_to_silence: list[str] = []) -> logging.Logger:
