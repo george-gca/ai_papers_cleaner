@@ -1148,7 +1148,7 @@ class TextCleaner():
 def _clean_abstract(paper: pd.Series, stop_when='') -> None:
     _logger.info(f'\nTitle: \n{paper["title"]}')
 
-    abstract = literal_eval(paper["abstract"])
+    abstract = literal_eval(paper['abstract'])
     _logger.info(f'\nAbstract:\n{abstract}')
 
     text_cleaner = TextCleaner(debug=True)
@@ -1262,8 +1262,9 @@ def _clean_abstract(paper: pd.Series, stop_when='') -> None:
         text_cleaner._pretty_print(stop_when, abstract)
         return
 
-    _logger.info(
-        f'\nFinal Abstract:\n{text_cleaner._highlight_not_recognized_words(abstract)}')
+    _logger.info(f'\nFinal Abstract:\n{text_cleaner._highlight_not_recognized_words(abstract)}')
+
+    _clean_title(paper)
 
 
 def _clean_abstracts(df: pd.DataFrame) -> pd.DataFrame:
@@ -1328,6 +1329,8 @@ def _clean_abstracts(df: pd.DataFrame) -> pd.DataFrame:
         text_cleaner.replace_hyphens_by_underline)
 
     # _logger.info(f'lemmatizer cache info: {lemmatizer.cache_info()}')
+
+    df = _clean_titles(df)
 
     return df
 
@@ -1805,6 +1808,51 @@ def _clean_papers(df: pd.DataFrame, show_progress: bool=False) -> pd.DataFrame:
         df = new_df
 
     # _logger.info(f'lemmatizer cache info: {lemmatizer.cache_info()}')
+
+    return df
+
+
+def _clean_title(paper: pd.Series) -> str:
+    _logger.info(f'\nTitle: \n{paper["title"]}')
+
+    text_cleaner = TextCleaner(debug=True)
+    clean_title = paper['title'].lower()
+    clean_title = ftfy.fix_text(clean_title)
+    clean_title = text_cleaner.remove_accents(clean_title)
+    clean_title = text_cleaner.remove_latex_commands(clean_title)
+    clean_title = text_cleaner.remove_latex_inline_equations(clean_title)
+    clean_title = clean_title.replace('\\', '')
+    clean_title = text_cleaner.remove_symbols(clean_title)
+    clean_title = clean_title.replace('--', '-')
+    clean_title = clean_title.replace('–', '-')
+    clean_title = clean_title.replace('−', '-')
+    clean_title = ' '.join(clean_title.strip().split())
+    clean_title = text_cleaner.remove_hyphens_slashes(clean_title)
+    clean_title = text_cleaner.remove_stopwords(clean_title)
+    clean_title = text_cleaner.plural_to_singular(clean_title)
+    clean_title = text_cleaner.replace_hyphens_by_underline(clean_title)
+
+    _logger.info(f'\nClean title:\n{text_cleaner._highlight_not_recognized_words(clean_title)}')
+
+
+def _clean_titles(df: pd.DataFrame) -> pd.DataFrame:
+    text_cleaner = TextCleaner()
+
+    df['clean_title'] = df['title'].str.lower()
+    df.loc[:, 'clean_title'] = df['clean_title'].apply(ftfy.fix_text)
+    df.loc[:, 'clean_title'] = df['clean_title'].apply(text_cleaner.remove_accents)
+    df.loc[:, 'clean_title'] = df['clean_title'].apply(text_cleaner.remove_latex_commands)
+    df.loc[:, 'clean_title'] = df['clean_title'].apply(text_cleaner.remove_latex_inline_equations)
+    df.loc[:, 'clean_title'] = df['clean_title'].str.replace(re.compile(r'\\'), '')
+    df.loc[:, 'clean_title'] = df['clean_title'].apply(text_cleaner.remove_symbols)
+    df.loc[:, 'clean_title'] = df['clean_title'].str.replace(re.compile(r'--'), '-')
+    df.loc[:, 'clean_title'] = df['clean_title'].str.replace(re.compile(r'–'), '-')
+    df.loc[:, 'clean_title'] = df['clean_title'].str.replace(re.compile(r'−'), '-')
+    df.loc[:, 'clean_title'] = df['clean_title'].str.strip().str.split().str.join(' ')
+    df.loc[:, 'clean_title'] = df['clean_title'].apply(text_cleaner.remove_hyphens_slashes)
+    df.loc[:, 'clean_title'] = df['clean_title'].apply(text_cleaner.remove_stopwords)
+    df.loc[:, 'clean_title'] = df['clean_title'].apply(text_cleaner.plural_to_singular)
+    df.loc[:, 'clean_title'] = df['clean_title'].apply(text_cleaner.replace_hyphens_by_underline)
 
     return df
 

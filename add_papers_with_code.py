@@ -11,7 +11,7 @@ from typing import Dict, Set, Union
 import pandas as pd
 from tqdm import tqdm
 
-from text_cleaner import _clean_abstracts, TextCleaner
+from text_cleaner import _clean_abstracts, _clean_titles, TextCleaner
 from utils import parallelize_dataframe, setup_log
 
 
@@ -37,14 +37,21 @@ def _convert_abstract_to_repr(d: Dict[str, Union[str, bool]]) -> Dict[str, Union
 
 
 def _clean_title(title: str, text_cleaner: TextCleaner) -> str:
-    title = ftfy.fix_text(title)
-    title = text_cleaner.remove_accents(title.lower())
-    title = title.replace('\\', '')
-    title = text_cleaner.remove_symbols(title).strip()
-    title = title.replace('--', '-')
-    title = title.replace('–', '-')
-    title = title.replace('−', '-')
-    return ' '.join(title.split())
+    clean_title = ftfy.fix_text(title.lower())
+    clean_title = text_cleaner.remove_accents(clean_title)
+    clean_title = text_cleaner.remove_latex_commands(clean_title)
+    clean_title = text_cleaner.remove_latex_inline_equations(clean_title)
+    clean_title = clean_title.replace('\\', '')
+    clean_title = text_cleaner.remove_symbols(clean_title)
+    clean_title = clean_title.replace('--', '-')
+    clean_title = clean_title.replace('–', '-')
+    clean_title = clean_title.replace('−', '-')
+    clean_title = ' '.join(clean_title.strip().split())
+    clean_title = text_cleaner.remove_hyphens_slashes(clean_title)
+    clean_title = text_cleaner.remove_stopwords(clean_title)
+    clean_title = text_cleaner.plural_to_singular(clean_title)
+    clean_title = text_cleaner.replace_hyphens_by_underline(clean_title)
+    return clean_title
 
 
 def _discard_keys(d: Dict[str, Union[str, bool]], keys_to_keep: Set[str]) -> Dict[str, Union[str, bool]]:
@@ -190,33 +197,10 @@ if __name__ == '__main__':
 
     # check if this paper is not already in the abstracts df
     # clean and compare the titles
+    df = _clean_titles(df)
+    df_urls = _clean_titles(df_urls)
+
     text_cleaner = TextCleaner()
-    df['clean_title'] = df['title'].str.lower()
-    df.loc[:, 'clean_title'] = df['clean_title'].apply(
-        ftfy.fix_text)
-    df.loc[:, 'clean_title'] = df['clean_title'].apply(
-        text_cleaner.remove_accents)
-    df.loc[:, 'clean_title'] = df['clean_title'].str.replace('\\', '')
-    df.loc[:, 'clean_title'] = df['clean_title'].apply(
-        text_cleaner.remove_symbols)
-    df.loc[:, 'clean_title'] = df['clean_title'].str.replace('--', '-')
-    df.loc[:, 'clean_title'] = df['clean_title'].str.replace('–', '-')
-    df.loc[:, 'clean_title'] = df['clean_title'].str.replace('−', '-')
-    df.loc[:, 'clean_title'] = df['clean_title'].str.strip().str.split().str.join(' ')
-
-    df_urls['clean_title'] = df_urls['title'].str.lower()
-    df_urls.loc[:, 'clean_title'] = df_urls['clean_title'].apply(
-        ftfy.fix_text)
-    df_urls.loc[:, 'clean_title'] = df_urls['clean_title'].apply(
-        text_cleaner.remove_accents)
-    df_urls.loc[:, 'clean_title'] = df_urls['clean_title'].str.replace('\\', '')
-    df_urls.loc[:, 'clean_title'] = df_urls['clean_title'].apply(
-        text_cleaner.remove_symbols)
-    df_urls.loc[:, 'clean_title'] = df_urls['clean_title'].str.replace('--', '-')
-    df_urls.loc[:, 'clean_title'] = df_urls['clean_title'].str.replace('–', '-')
-    df_urls.loc[:, 'clean_title'] = df_urls['clean_title'].str.replace('−', '-')
-    df_urls.loc[:, 'clean_title'] = df_urls['clean_title'].str.strip().str.split().str.join(' ')
-
     papers = {_clean_title(d['title'], text_cleaner): d for d in papers_abstracts if d['title'] is not None and d['abstract'] is not None}
 
     # if it is, just add the new url to the urls dataframe
@@ -263,7 +247,6 @@ if __name__ == '__main__':
     # creating new abstracts with added papers_with_code info
     useful_keys = {
         'abstract',
-        'clean_title',
         'conference',
         'title',
         'year',
@@ -340,6 +323,7 @@ if __name__ == '__main__':
     # cleaning abstracts
     n_processes = 3*multiprocessing.cpu_count()//4
     df_abstracts_clean = parallelize_dataframe(df_abstracts, _clean_abstracts, n_processes)
+    df_abstracts_clean = parallelize_dataframe(df_abstracts_clean, _clean_titles, n_processes)
     df_abstracts_clean.to_csv(papers_file.parent / 'abstracts_clean.csv', sep='|', index=False)
 
     # creating new abstracts_clean with added papers_with_code info
