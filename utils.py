@@ -35,6 +35,7 @@ supported_conferences = [
     'eacl/2021',
     'eccv/2018',
     'eccv/2020',
+    'eccv/2022',
     'emnlp/2017',
     'emnlp/2018',
     'emnlp/2019',
