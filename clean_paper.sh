@@ -10,10 +10,10 @@ paper_separator='<#sep#>'
 # clean_abstracts=1
 clean_papers=1
 
-# index=565
-title="Moon IME: Neural-based Chinese Pinyin Aided Input Method with Customizable Association"
-conf=acl
-year=2018
+index=1
+# title="Moon IME: Neural-based Chinese Pinyin Aided Input Method with Customizable Association"
+conf=aaai
+year=2017
 
 
 
