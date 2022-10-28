@@ -162,6 +162,7 @@ class TextCleaner():
 
         non_singularizable_words = {
             'nas', # neural architecture search
+            'thus'
         }
 
         for w in non_singularizable_words:
@@ -690,9 +691,15 @@ class TextCleaner():
 
         tokens = word_tokenize(text)
 
-        words_in_singular = [
-            lemmatizer(w) if w not in extra_lemmas_dict else extra_lemmas_dict[w] for w in tokens]
+        def _lemmatize_fn(word: str) -> str:
+            if word[-3:] == 'ous': # dangerous, heterogeneous, various
+                return word
 
+            return lemmatizer(word)
+
+        words_in_singular = [_lemmatize_fn(w) if w not in extra_lemmas_dict else extra_lemmas_dict[w] for w in tokens]
+
+        # do this because how inflect library works (returns singular of the word or False)
         words_in_singular = [w if not isinstance(w, bool) else tokens[i] for i, w in enumerate(words_in_singular)]
 
         if self._debug:
