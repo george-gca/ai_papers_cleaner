@@ -93,10 +93,14 @@ def main(args):
 
         joined_papers_titles.update(papers_titles)
 
+    _logger.info(f'Final sizes:\n\tabstracts: {len(joined_abstracts)}\n\tabstracts_clean: {len(joined_abstracts_clean)}\n\tpaper_info: {len(joined_paper_info)}\n\tpdfs_urls: {len(joined_pdfs_urls)}')
+
     joined_abstracts.to_feather(data_dir / 'abstracts.feather', compression='zstd')
     joined_abstracts_clean.to_feather(data_dir / 'abstracts_clean.feather', compression='zstd')
     joined_paper_info.to_feather(data_dir / 'paper_info.feather', compression='zstd')
     joined_pdfs_urls.to_feather(data_dir / 'pdfs_urls.feather', compression='zstd')
+
+    assert len(joined_abstracts_clean) == len()
 
 
 if __name__ == '__main__':
