@@ -74,3 +74,24 @@ Then, inside the Python shell:
 import nltk
 nltk.download('stopwords')
 ```
+
+## Checking the cleaning process
+
+The best way to check how the cleaning process works for a specific paper is by running the [clean_paper.sh](clean_paper.sh) script. You can set inside the following variables:
+
+```bash
+# clean_abstracts=1
+clean_papers=1
+
+index=1
+# title="Moon IME: Neural-based Chinese Pinyin Aided Input Method with Customizable Association"
+conf=aaai
+year=2017
+```
+
+To check the abstract cleaning process, uncomment the `clean_abstracts` line and comment the `clean_papers` line. To check the paper cleaning process, reverse the comments. You need to set the `conf` and `year` variables to the conference (as displayed in the `conferences` array in [start_here.sh](start_here.sh)) and year of your choice, and set one of `index` or `title` variables. The `index` variable is the index of the paper in the `abstracts.csv` or `pdfs.csv` file, while `title` can be a part of the title of the paper. If you set both, the `index` variable will be used. To call the clean_paper.sh script, run:
+
+```bash
+bash clean_paper.sh # if you're running without Docker
+make RUN_STRING="bash clean_paper.sh" run # if you're running with Docker
+```
