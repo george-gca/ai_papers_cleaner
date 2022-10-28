@@ -61,7 +61,7 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
     # https://github.com/jaraco/inflect/pull/167
     # https://github.com/jaraco/inflect/pull/168
     $PIP_INSTALL \
-        git+https://github.com/george-gca/inflect && \
+        git+https://github.com/george-gca/inflect@fix_s_plural_noun && \
 
 # ==================================================================
 # config & cleanup
