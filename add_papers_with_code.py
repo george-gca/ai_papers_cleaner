@@ -3,13 +3,14 @@ import logging
 from pathlib import Path
 import ftfy
 import json
-import multiprocessing
 import re
 from difflib import SequenceMatcher
+from multiprocessing import cpu_count
 from typing import Dict, Set, Union
 
 import pandas as pd
 from tqdm import tqdm
+from tqdm.contrib.concurrent import process_map
 
 from text_cleaner import _clean_abstracts, _clean_titles, TextCleaner
 from utils import parallelize_dataframe, setup_log
@@ -128,6 +129,8 @@ if __name__ == '__main__':
                         choices=('debug', 'info', 'warning',
                                  'error', 'critical', 'print'),
                         help='log level to debug')
+    parser.add_argument('-p', '--run_parallel', action='store_true',
+                        help='run the code in multiple processes')
     parser.add_argument('--papers_file', type=str, default='data/papers_with_code/papers-with-abstracts.json',
                         help='file name with papers abstracts')
     parser.add_argument('--papers_info_file', type=str, default='data/paper_info.feather',
@@ -212,18 +215,42 @@ if __name__ == '__main__':
 
     # also consider papers with similar titles as already in previous data
     papers_not_in = {k: v for k, v in papers.items() if k not in papers_already_in}
-    seq_matcher = SequenceMatcher()
-    similar_titles = set()
-    _logger.info('\nPrinting similar titles')
-    for k, v in tqdm(papers_not_in.items(), desc='Similar titles', ncols=150):
-        seq_matcher.set_seq2(v['title'])
-        for _, t in df.title[abs(df.title.str.len() - len(v['title'])) < 5].iteritems():
-            seq_matcher.set_seq1(t)
 
-            if seq_matcher.real_quick_ratio() > 0.95 and seq_matcher.quick_ratio() > 0.95:  # and seq_matcher.ratio() > 0.95:
-                similar_titles.add(k)
-                tqdm.write(f'{t}\n{v["title"]}\n')
-                break
+    if args.run_parallel:
+        def _find_similar_titles(papers_to_check):
+            seq_matcher = SequenceMatcher()
+            similar_titles = set()
+            for k, v in papers_to_check:
+                seq_matcher.set_seq2(v['title'])
+                for _, t in df.title[abs(df.title.str.len() - len(v['title'])) < 5].items():
+                    seq_matcher.set_seq1(t)
+
+                    if seq_matcher.real_quick_ratio() > 0.95 and seq_matcher.quick_ratio() > 0.95:  # and seq_matcher.ratio() > 0.95:
+                        similar_titles.add(k)
+                        break
+
+            return similar_titles
+
+        n_processes = 3 * cpu_count() // 4
+        chunk_size = len(papers_not_in) // n_processes
+        list_papers_not_in = list(papers_not_in.items())
+        list_chunked = [list_papers_not_in[i:i + chunk_size] for i in range(0, len(list_papers_not_in), chunk_size)]
+        results = process_map(_find_similar_titles, list_chunked, max_workers=n_processes)
+        similar_titles = {v for s in results for v in s}
+
+    else:
+        seq_matcher = SequenceMatcher()
+        similar_titles = set()
+        _logger.info('\nPrinting similar titles')
+        for k, v in tqdm(papers_not_in.items(), desc='Similar titles', ncols=150):
+            seq_matcher.set_seq2(v['title'])
+            for _, t in df.title[abs(df.title.str.len() - len(v['title'])) < 5].iteritems():
+                seq_matcher.set_seq1(t)
+
+                if seq_matcher.real_quick_ratio() > 0.95 and seq_matcher.quick_ratio() > 0.95:  # and seq_matcher.ratio() > 0.95:
+                    similar_titles.add(k)
+                    tqdm.write(f'{t}\n{v["title"]}\n')
+                    break
 
     _logger.info(f'\n{len(similar_titles):n} similar titles')
 
@@ -321,7 +348,7 @@ if __name__ == '__main__':
     # df_pdfs_urls.to_feather(papers_file.parent / 'pdfs_urls.feather', compression='zstd')
 
     # cleaning abstracts
-    n_processes = 3*multiprocessing.cpu_count()//4
+    n_processes = 3*cpu_count()//4
     df_abstracts_clean = parallelize_dataframe(df_abstracts, _clean_abstracts, n_processes)
     df_abstracts_clean = parallelize_dataframe(df_abstracts_clean, _clean_titles, n_processes)
     df_abstracts_clean.to_csv(papers_file.parent / 'abstracts_clean.csv', sep='|', index=False)
