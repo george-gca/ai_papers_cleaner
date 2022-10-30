@@ -27,7 +27,7 @@ def main(args):
     log_dir = Path('logs/').expanduser()
     log_dir.mkdir(exist_ok=True)
     log_file = log_dir / 'unify_papers_data.log'
-    setup_log(args, log_file)
+    setup_log(args.log_level, log_file)
 
     data_dir = Path(args.data_dir).expanduser()
     abstract_sep = '|'
@@ -75,7 +75,15 @@ def main(args):
         papers_already_joined = papers_titles.intersection(joined_papers_titles)
 
         if len(papers_already_joined) > 0:
-            _logger.warning(f'{len(papers_already_joined)} papers already joined from {conf} {year} out of {len(papers_titles)}')
+            if len(papers_already_joined) == len(papers_titles):
+                _logger.warning(f'All {len(papers_already_joined)} papers from {conf} {year} already joined')
+            else:
+                _logger.warning(f'{len(papers_already_joined)} papers already joined from {conf} {year} out of {len(papers_titles)}')
+
+            if _logger.isEnbledFor(logging.DEBUG):
+                for title in papers_already_joined:
+                    _logger.debug(f'\t{title}')
+                
             df = df[~df['title'].isin(papers_already_joined)]
 
         df['conference'] = conf
@@ -89,7 +97,8 @@ def main(args):
         joined_paper_info = _concat_filtered_df(joined_paper_info, data_dir / conference / 'paper_info.csv', conf, year, paper_info_sep, papers_already_joined)
 
         # adding new pdfs_urls from this conference that have not been added yet
-        joined_pdfs_urls = _concat_filtered_df(joined_pdfs_urls, data_dir / conference / 'pdfs_urls.csv', conf, year, abstract_sep, papers_already_joined)
+        if (data_dir / conference / 'pdfs_urls.csv').exists():
+            joined_pdfs_urls = _concat_filtered_df(joined_pdfs_urls, data_dir / conference / 'pdfs_urls.csv', conf, year, abstract_sep, papers_already_joined)
 
         joined_papers_titles.update(papers_titles)
 
@@ -100,7 +109,7 @@ def main(args):
     joined_paper_info.to_feather(data_dir / 'paper_info.feather', compression='zstd')
     joined_pdfs_urls.to_feather(data_dir / 'pdfs_urls.feather', compression='zstd')
 
-    assert len(joined_abstracts_clean) == len()
+    assert len(joined_abstracts_clean) == len(joined_paper_info), f'{len(joined_abstracts_clean)} abstracts clean and {len(joined_paper_info)} papers infos'
 
 
 if __name__ == '__main__':

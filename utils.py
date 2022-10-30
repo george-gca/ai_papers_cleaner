@@ -1,5 +1,5 @@
-import argparse
 import logging
+from logging.handlers import RotatingFileHandler
 from multiprocessing import cpu_count
 from pathlib import Path
 from typing import Callable, Union
@@ -112,19 +112,22 @@ def parallelize_dataframe(df: pd.DataFrame, func: Callable, n_processes: int = c
     return df
 
 
-def setup_log(args: argparse.Namespace, log_file: Union[str, Path] = Path('run.log'), file_log_level: int = logging.INFO, logs_to_silence: list[str] = []) -> logging.Logger:
+def setup_log(log_level: str = 'warning', log_file: Union[str, Path] = Path('run.log'), file_log_level: str = 'info', logs_to_silence: list[str] = []) -> logging.Logger:
     """
     Setup the logging.
 
     Args:
-        args (argparse.Namespace): args passed when calling the code (as in argparse)
-        name (str): name of the created logger
-        log_file (Union[str, Path], optional): file where the log output should be stored. Defaults to 'run.log'.
-        logs_to_silence (list[str], optional): list of loggers to be silenced. Useful when using log level < logging.WARNING. Defaults to [].
+        log_level (int): stdout log level. Defaults to logging.WARNING.
+        log_file (Union[str, Path]): file where the log output should be stored. Defaults to 'run.log'.
+        file_log_level (int): file log level. Defaults to logging.DEBUG.
+        logs_to_silence (list[str]): list of loggers to be silenced. Useful when using log level < logging.WARNING. Defaults to [].
 
     Returns:
         logging.Logger: default logger with given name
     """
+    # TODO: fix this according to this
+    # https://stackoverflow.com/questions/384076/how-can-i-color-python-logging-output
+    # https://www.electricmonk.nl/log/2017/08/06/understanding-pythons-logging-module/
     logging.PRINT = 60
     logging.addLevelName(60, 'PRINT')
 
@@ -135,39 +138,39 @@ def setup_log(args: argparse.Namespace, log_file: Union[str, Path] = Path('run.l
 
     logging.Logger.print = log_print
 
-    log_level = {
+    # convert log levels to int
+    int_log_level = {
         'debug': logging.DEBUG,  # 10
         'info': logging.INFO,  # 20
         'warning': logging.WARNING,  # 30
         'error': logging.ERROR,  # 40
         'critical': logging.CRITICAL,  # 50
         'print': logging.PRINT,  # 60
-    }[args.log_level]
+    }
+
+    log_level = int_log_level[log_level]
+    file_log_level = int_log_level[file_log_level]
 
     # create a handler to log to stderr
     stderr_handler = logging.StreamHandler()
     stderr_handler.setLevel(log_level)
 
     # create a logging format
-    # if log_level >= logging.WARNING:
-    stderr_formatter = logging.Formatter('{message}', style='{')
-    # else:
-        # stderr_formatter = logging.Formatter(
-        #     # format:
-        #     # <10 = pad with spaces if needed until it reaches 10 chars length
-        #     # .10 = limit the length to 10 chars
-        #     '{name:<10.10} [{levelname:.1}] {message}', style='{')
+    if log_level >= logging.WARNING:
+        stderr_formatter = logging.Formatter('{message}', style='{')
+    else:
+        stderr_formatter = logging.Formatter(
+            # format:
+            # <10 = pad with spaces if needed until it reaches 10 chars length
+            # .10 = limit the length to 10 chars
+            '{name:<10.10} [{levelname:.1}] {message}', style='{')
     stderr_handler.setFormatter(stderr_formatter)
 
     # create a file handler that have size limit
-    # file_handler = logging.handlers.RotatingFileHandler(os.path.join(
-    #     logdir, 'log.txt'), maxBytes=5000000, backupCount=5)  # ~ 5 MB
-
-    # create a handler to log to file
     if isinstance(log_file, str):
         log_file = Path(log_file).expanduser()
 
-    file_handler = logging.FileHandler(log_file, mode='w')
+    file_handler = RotatingFileHandler(log_file, maxBytes=5000000, backupCount=5)  # ~ 5 MB
     file_handler.setLevel(file_log_level)
 
     # https://docs.python.org/3/library/logging.html#logrecord-attributes
@@ -176,7 +179,7 @@ def setup_log(args: argparse.Namespace, log_file: Union[str, Path] = Path('run.l
     file_handler.setFormatter(file_formatter)
 
     # add the handlers to the root logger
-    logging.basicConfig(handlers=[file_handler, stderr_handler], level=log_level)
+    logging.basicConfig(handlers=[file_handler, stderr_handler], level=logging.DEBUG)
 
     # change logger level of logs_to_silence to warning
     for other_logger in logs_to_silence:
@@ -187,5 +190,3 @@ def setup_log(args: argparse.Namespace, log_file: Union[str, Path] = Path('run.l
 
     logger.info(f'Saving logs to {log_file.absolute()}')
     logger.info(f'Log level: {logging.getLevelName(log_level)}')
-
-    return logger

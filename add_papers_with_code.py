@@ -140,7 +140,7 @@ if __name__ == '__main__':
 
     log_dir = Path('logs/').expanduser()
     log_dir.mkdir(exist_ok=True)
-    setup_log(args, log_dir / 'add_papers_with_code.log')
+    setup_log(args.log_level, log_dir / 'add_papers_with_code.log')
 
     # loading abstracts
     abstracts_file = Path(args.abstracts_file).expanduser()

@@ -1907,7 +1907,7 @@ if __name__ == '__main__':
 
     logdir = Path('logs/').expanduser()
     logdir.mkdir(exist_ok=True)
-    setup_log(args, logdir / 'text_cleaner.log')
+    setup_log(args.log_level, logdir / 'text_cleaner.log')
 
     if len(args.separator) == 1:
         df = pd.read_csv(args.file, sep=args.separator,
