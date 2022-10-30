@@ -1949,9 +1949,9 @@ if __name__ == '__main__':
 
         if args.abstract_only:
             if args.n_processes == 1 or len(df) < args.n_processes * min_papers_per_process:
-                df = _clean_abstracts(df)
+                new_df = _clean_abstracts(df)
             else:
-                df = parallelize_dataframe(
+                new_df = parallelize_dataframe(
                     df, _clean_abstracts, args.n_processes)
 
             new_file_name = Path(args.file).name
@@ -1959,17 +1959,18 @@ if __name__ == '__main__':
             new_file_name = '.'.join(
                 new_file_name[:-1]) + '_clean.' + new_file_name[-1]
             _logger.info(f'Saving DataFrame to {new_file_name}')
-            df.to_csv(Path(args.file).parent / new_file_name, sep='|', index=False)
+            new_df.to_csv(Path(args.file).parent / new_file_name, sep='|', index=False)
+            assert len(df) == len(new_df), f'DataFrame size changed after cleaning: {len(df)} -> {len(new_df)}'
 
         else:
             if args.n_processes == 1 or len(df) < args.n_processes * min_papers_per_process:
                 _logger.info(f'n_papers ({len(df)}) < n_processes * {min_papers_per_process} ({args.n_processes} * {min_papers_per_process} = {args.n_processes * min_papers_per_process})')
                 _logger.info(f'Running in a single process')
-                df = _clean_papers(df, show_progress=True)
+                new_df = _clean_papers(df, show_progress=True)
             else:
                 _logger.info(f'n_papers ({len(df)}) >= n_processes * {min_papers_per_process} ({args.n_processes} * {min_papers_per_process} = {args.n_processes * min_papers_per_process})')
                 _logger.info(f'Parallelizing to {args.n_processes} processes')
-                df = parallelize_dataframe(
+                new_df = parallelize_dataframe(
                     df, _clean_papers, args.n_processes)
 
             new_file_name = Path(args.file).name
@@ -1977,4 +1978,5 @@ if __name__ == '__main__':
             new_file_name = '.'.join(
                 new_file_name[:-1]) + '_clean.' + new_file_name[-1]
             _logger.info(f'Saving DataFrame to {new_file_name}')
-            df.to_csv(Path(args.file).parent / new_file_name, sep='|', index=False)
+            new_df.to_csv(Path(args.file).parent / new_file_name, sep='|', index=False)
+            assert len(df) == len(new_df), f'DataFrame size changed after cleaning: {len(df)} -> {len(new_df)}'
