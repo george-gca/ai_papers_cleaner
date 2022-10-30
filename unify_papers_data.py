@@ -80,7 +80,7 @@ def main(args):
             else:
                 _logger.warning(f'{len(papers_already_joined)} papers already joined from {conf} {year} out of {len(papers_titles)}')
 
-            if _logger.isEnbledFor(logging.DEBUG):
+            if _logger.isEnabledFor(logging.DEBUG):
                 for title in papers_already_joined:
                     _logger.debug(f'\t{title}')
                 
