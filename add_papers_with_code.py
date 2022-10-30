@@ -215,7 +215,7 @@ if __name__ == '__main__':
     seq_matcher = SequenceMatcher()
     similar_titles = set()
     _logger.info('\nPrinting similar titles')
-    for k, v in tqdm(papers_not_in.items(), desc='Similar titles'):
+    for k, v in tqdm(papers_not_in.items(), desc='Similar titles', ncols=150):
         seq_matcher.set_seq2(v['title'])
         for _, t in df.title[abs(df.title.str.len() - len(v['title'])) < 5].iteritems():
             seq_matcher.set_seq1(t)
