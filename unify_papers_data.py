@@ -58,6 +58,9 @@ def main(args):
     joined_pdfs_urls['conference'] = conf
     joined_pdfs_urls['year'] = year
 
+    assert len(joined_abstracts) == len(joined_abstracts_clean) == len(joined_paper_info), \
+            f'Number of papers information after {conf} {year} differ: {len(joined_abstracts)}, {len(joined_abstracts_clean)}, and {len(joined_paper_info)}'
+
     joined_papers_titles = set(joined_abstracts['title'])
 
     for conference in conferences[1:]:
@@ -83,7 +86,7 @@ def main(args):
             if _logger.isEnabledFor(logging.DEBUG):
                 for title in papers_already_joined:
                     _logger.debug(f'\t{title}')
-                
+
             df = df[~df['title'].isin(papers_already_joined)]
 
         df['conference'] = conf
@@ -101,6 +104,9 @@ def main(args):
             joined_pdfs_urls = _concat_filtered_df(joined_pdfs_urls, data_dir / conference / 'pdfs_urls.csv', conf, year, abstract_sep, papers_already_joined)
 
         joined_papers_titles.update(papers_titles)
+
+        assert len(joined_abstracts) == len(joined_abstracts_clean) == len(joined_paper_info), \
+            f'Number of papers information after {conf} {year} differ: {len(joined_abstracts)}, {len(joined_abstracts_clean)}, and {len(joined_paper_info)}'
 
     _logger.info(f'Final sizes:\n\tabstracts: {len(joined_abstracts)}\n\tabstracts_clean: {len(joined_abstracts_clean)}\n\tpaper_info: {len(joined_paper_info)}\n\tpdfs_urls: {len(joined_pdfs_urls)}')
 
