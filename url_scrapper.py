@@ -147,7 +147,7 @@ if __name__ == '__main__':
 
     log_dir = Path('logs/').expanduser()
     log_dir.mkdir(exist_ok=True)
-    setup_log(args, log_dir / 'url_scrapper.log')
+    setup_log(args.log_level, log_dir / 'url_scrapper.log')
 
     if len(args.separator) == 1:
         df = pd.read_csv(args.file, sep=args.separator,

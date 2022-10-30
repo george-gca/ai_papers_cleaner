@@ -86,7 +86,7 @@ if __name__ == '__main__':
 
     log_dir = Path('logs/').expanduser()
     log_dir.mkdir(exist_ok=True)
-    setup_log(args, log_dir / 'pdf_extractor.log')
+    setup_log(args.log_level, log_dir / 'pdf_extractor.log')
 
     conference_year_dir = Path('data') / args.conference / args.year
     papers = conference_year_dir / 'papers'
