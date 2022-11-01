@@ -156,7 +156,7 @@ def setup_log(log_level: str = 'warning', log_file: Union[str, Path] = Path('run
     stderr_handler.setLevel(log_level)
 
     # create a logging format
-    if log_level >= logging.WARNING:
+    if log_level >= logging.INFO:
         stderr_formatter = logging.Formatter('{message}', style='{')
     else:
         stderr_formatter = logging.Formatter(
