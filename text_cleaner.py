@@ -1633,7 +1633,7 @@ def _clean_papers(df: pd.DataFrame, show_progress: bool=False) -> pd.DataFrame:
         pbar.set_description(text.ljust(pbar_desc_len))
         pbar.update()
 
-    with tqdm(total=53, disable=not show_progress, unit='step') as pbar:
+    with tqdm(total=53, disable=not show_progress, unit='step', ncols=250) as pbar:
         df.loc[:, 'paper'] = df['paper'].apply(literal_eval)
         update_pbar(pbar, 'Reading papers')
         df.loc[:, 'paper'] = df['paper'].apply(ftfy.fix_text)

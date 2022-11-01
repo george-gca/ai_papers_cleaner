@@ -218,7 +218,7 @@ if __name__ == '__main__':
     df_urls = _clean_titles(df_urls, progress=True)
 
     text_cleaner = TextCleaner()
-    papers = {_clean_title(d['title'], text_cleaner): d for d in tqdm(papers_abstracts, unit='paper', ncols=30) if d['title'] is not None and d['abstract'] is not None}
+    papers = {_clean_title(d['title'], text_cleaner): d for d in tqdm(papers_abstracts, unit='paper', ncols=250, desc='Cleaning PWC titles') if d['title'] is not None and d['abstract'] is not None}
 
     # if it is, just add the new url to the urls dataframe
     # df_urls[df_urls.clean_title.isin(papers)] = df_urls[df_urls.clean_title.isin(papers)].apply(_add_urls, papers_urls=papers, axis=1)
@@ -256,7 +256,7 @@ if __name__ == '__main__':
         seq_matcher = SequenceMatcher()
         similar_titles = set()
         _logger.info('\nPrinting similar titles')
-        for k, v in tqdm(papers_not_in.items(), desc='Similar titles', ncols=150):
+        for k, v in tqdm(papers_not_in.items(), desc='Similar titles', ncols=250):
             seq_matcher.set_seq2(v['title'])
             for _, t in df.title[abs(df.title.str.len() - len(v['title'])) < 5].iteritems():
                 seq_matcher.set_seq1(t)
