@@ -38,20 +38,54 @@ def _convert_abstract_to_repr(d: Dict[str, Union[str, bool]]) -> Dict[str, Union
 
 
 def _clean_title(title: str, text_cleaner: TextCleaner) -> str:
-    clean_title = ftfy.fix_text(title.lower())
-    clean_title = text_cleaner.remove_accents(clean_title)
-    clean_title = text_cleaner.remove_latex_commands(clean_title)
-    clean_title = text_cleaner.remove_latex_inline_equations(clean_title)
-    clean_title = clean_title.replace('\\', '')
-    clean_title = text_cleaner.remove_symbols(clean_title)
-    clean_title = clean_title.replace('--', '-')
-    clean_title = clean_title.replace('–', '-')
-    clean_title = clean_title.replace('−', '-')
-    clean_title = ' '.join(clean_title.strip().split())
-    clean_title = text_cleaner.remove_hyphens_slashes(clean_title)
-    clean_title = text_cleaner.remove_stopwords(clean_title)
-    clean_title = text_cleaner.plural_to_singular(clean_title)
-    clean_title = text_cleaner.replace_hyphens_by_underline(clean_title)
+    pbar_desc_len = 30
+    def update_pbar(pbar, text):
+        pbar.set_description(text.ljust(pbar_desc_len))
+        pbar.update()
+
+    with tqdm(total=14, unit='step') as pbar:
+        clean_title = ftfy.fix_text(title.lower())
+        update_pbar(pbar, 'Fix unicode')
+
+        clean_title = text_cleaner.remove_accents(clean_title)
+        update_pbar(pbar, 'Remove accents')
+
+        clean_title = text_cleaner.remove_latex_commands(clean_title)
+        update_pbar(pbar, 'Remove latex commands')
+
+        clean_title = text_cleaner.remove_latex_inline_equations(clean_title)
+        update_pbar(pbar, 'Removing latex inline equations')
+
+        clean_title = clean_title.replace('\\', '')
+        update_pbar(pbar, 'Replacing backslash')
+
+        clean_title = text_cleaner.remove_symbols(clean_title)
+        update_pbar(pbar, 'Replacing symbols')
+
+        clean_title = clean_title.replace('--', '-')
+        update_pbar(pbar, 'Replacing double hyphen')
+
+        clean_title = clean_title.replace('–', '-')
+        update_pbar(pbar, 'Replacing hyphen')
+
+        clean_title = clean_title.replace('−', '-')
+        update_pbar(pbar, 'Replacing hyphen')
+
+        clean_title = ' '.join(clean_title.strip().split())
+        update_pbar(pbar, 'Removing trailing spaces')
+
+        clean_title = text_cleaner.remove_hyphens_slashes(clean_title)
+        update_pbar(pbar, 'Removing hyphens and slashes')
+
+        clean_title = text_cleaner.remove_stopwords(clean_title)
+        update_pbar(pbar, 'Removing stopwords')
+
+        clean_title = text_cleaner.plural_to_singular(clean_title)
+        update_pbar(pbar, 'Converting to singular')
+
+        clean_title = text_cleaner.replace_hyphens_by_underline(clean_title)
+        update_pbar(pbar, 'Replacing hyphens by underline')
+
     return clean_title
 
 
@@ -213,8 +247,8 @@ if __name__ == '__main__':
 
     # check if this paper is not already in the abstracts df
     # clean and compare the titles
-    df = _clean_titles(df)
-    df_urls = _clean_titles(df_urls)
+    df = _clean_titles(df, progress=True)
+    df_urls = _clean_titles(df_urls, progress=True)
 
     text_cleaner = TextCleaner()
     papers = {_clean_title(d['title'], text_cleaner): d for d in papers_abstracts if d['title'] is not None and d['abstract'] is not None}
