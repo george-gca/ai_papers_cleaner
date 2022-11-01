@@ -54,7 +54,7 @@ def main(args):
     joined_paper_info['year'] = year
 
     pdfs_urls_file = data_dir / conference / 'pdfs_urls.csv'
-    joined_pdfs_urls = pd.read_csv(pdfs_urls_file, sep=paper_info_sep, dtype=str, keep_default_na=False)
+    joined_pdfs_urls = pd.read_csv(pdfs_urls_file, sep=abstract_sep, dtype=str, keep_default_na=False)
     joined_pdfs_urls['conference'] = conf
     joined_pdfs_urls['year'] = year
 
