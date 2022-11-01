@@ -30,7 +30,6 @@ BG_HIGHLIGHT_COLOR = Back.GREEN
 
 
 # TODO clean these
-# national_natural_science_foundation_china
 # advancement_artifcial_intelligence_www_aaai
 # copyright_association_advancement_artifcial_intelligence
 # association_advancement_artifcial_intelligence_www
@@ -214,7 +213,7 @@ class TextCleaner():
             'conference on neural information processing systems (neurips|nips) [\w]+ ([\w]+ )*(canada|usa)',
             'conference on neural information processing systems \((neurips|nips) [\d]+\), [\w\s]+, ([\w]+, )*[\w]+',
             'conference on neural information processing systems \(neurips [\d]+\)',
-            'copyright [\S]+ [\d]+, association for the advancement of (artificial|artifi- cial) intelligence \(www.aaai.org\)',
+            'copyright [\S]+ [\d]+, association for the advancement of (artificial|artifcial|artifi- cial) intelligence \(www.aaai.org\)',
             f'experimental economics {num_colon_hyphen_par}',
             'ijcv, [\w]+ [\d]+',
             f'in [\d]+ aaai [\w]+ symposium series, [\d]+',
@@ -233,10 +232,10 @@ class TextCleaner():
             'in the ieee international conference on computer vision \(iccv\)',
             '(in the [\d]+ )?conference of the north american chapter of the association for computational linguistics',
             f'in www, {num_or_hyphen}. acm',
-            f'in proceedings of the {ordinal_num} international conference on (artificial|artifi- cial) intelligence, {num_or_hyphen}. aaai press',
+            f'in proceedings of the {ordinal_num} international conference on (artificial|artifcial|artifi- cial) intelligence, {num_or_hyphen}. aaai press',
             f'in proceedings of the [\w]+ international conference on artificial intelligence and statistics, pp. {num_or_hyphen}, [\d]+',
             'in (proceedings of |proc. )?international conference on machine learning((, volume [\d]+, pp. [\d\s\-\−\–]+)?, [\d]+)?',
-            'in international joint conferences on (artificial|artifi- cial) intelligence',
+            'in international joint conferences on (artificial|artifcial|artifi- cial) intelligence',
             f'ieee transactions on [\w\s\-\−\–]*{num_colon_hyphen_par}',
             'in proceedings alt, [\d]+',
             f'journal of artificial intelligence research, {num_colon_hyphen_par}',
@@ -260,14 +259,14 @@ class TextCleaner():
             f'proceedings of the [\d]+[\s]*(st|nd|rd|th) international conference on [\w\s,\-\−\–]+ pmlr ([\d,\s]+.)? copyright ([\d]+ )?by the author\(s\)',
             'proceedings of the (st|nd|rd|th) international conference on machine learning online pmlr copyright by the author',
             f'proceedings of the {ordinal_num} international conference on machine learning \(icml [\d]+\), [\d]+',
-            '(proceedings of the|in) [\w]+(-[\w]+)? aaai conference on (artificial|artifi- cial) intelligence(, [\d]+| \(aaai-[\d]+\))?',
+            '(proceedings of the|in) [\w]+(-[\w]+)? aaai conference on (artificial|artifcial|artifi- cial) intelligence(, [\d]+| \(aaai-[\d]+\))?',
             f'{prefix_proceedings}{prefix_paper_type}{pages_and_location}{dates_year}{suffix_acl}',
             'c[\d]+ association for computational linguistics',
             f'findings of the association for computational linguistics: emnlp [\d]+, page(s)? {num_or_hyphen}(,|.)? [\w]+ [\d\-\−\–\s]+(,|.) [\d]+',
             f'(in )?(advances in neural information processing|findings of|proceedings of|{ordinal_num}? (international )?conference (on|in)) [\d\w\s\(\)#&\-\−\–:,.]+ page(s)? {num_or_hyphen}(,|.)( [\d]+)?',
             '[\w]+, [\w]+, [\w]+ [\d]+ - [\w]+ [\d]+, [\d]+. [\w\d]+ association for computational linguistics',
             f'[\w]+, [\w]+( \(online\))?, [\w]+ {num_or_hyphen}, [\d]+. (©)?[\d]+ association for computational linguistics proceedings of the {ordinal_num}[\w\s]+, page(s)? {num_or_hyphen}',
-            'proceedings of the [\w\-]+ international joint conference on (artificial|artifi- cial) intelligence \([\d\w\-]+\)',
+            '[\w]*proceedings of the [\w\-]+ international joint conference on (artificial|artifcial|artifi- cial) intelligence \([\d\w\-]+\)',
             'published as a conference paper at [\w]+( [\d]+)?',
             'proceedings of the [\d]+[\s]*(st|nd|rd|th) international conference on machine learning, [\w]+( [\w]+)*, ([\w]+( [\w]+)*, )*pmlr [\d]+, [\d]+. copyright( [\d]+)? by the author(\(s\))?',
             'published as a conference paper at [\w]+( [\d]+)',
@@ -281,7 +280,9 @@ class TextCleaner():
         ]
 
         self._phrases_to_remove = [
-            '(these )?authors contribute(d)? equally',
+            '(ablation studies )?we (also )?conduct(ed)? ablation studies( to)?',
+            'ablation studies',
+            '(these |both the |all the |the first [\w]+ |first [\w]+ |the )?(authors )?contribute(d)? equally( to this work)?',
             'in fact',
             'corresponding author',
             f'(in {item_citation} [\d]+ )?((we )|(it ))?(also |now )?show(s|n)? (in {item_citation} [\d]+ )?(that|(the )?result(s)?)',
@@ -309,6 +310,7 @@ class TextCleaner():
             # '(in )?(the )?([\w]+|each) ([\w]+ )?(row|column)(s)?( show(s)?)?( that| the)?',
             '(the |this )?(work|research|paper) was (partially )?(done|funded by|supported by) ([\w\s\d\-\_,]+ \(((, | and )?no. [\d\w\-\s]+)+\))+.',
             '(the |this )?(work|research|paper) was (partially )?(done|funded by|supported by) [\w\s\d\-\_]+(no|and no)+ ([\w\d\-\_]+)*',
+            '(the |this )?(work|research|paper) was (partially )?(done|funded by|supported by) [\w\s\d\-\_]+\((grant no(.)? [\d]+| and |, and |no(.)? [\d]+)+\)',
             '(the |this )?(work|research|paper) was (partially )?(done|funded by|supported by)',
             'joint research project with youtu lab of tencent',
             '(the code )?(is |will be )?available at',
@@ -1956,8 +1958,7 @@ if __name__ == '__main__':
         specific_paper = True
     elif len(args.title) > 0:
         file_to_find = args.title.lower()
-        found_papers = df.loc[df['title'].str.lower().str.find(
-            file_to_find) >= 0]
+        found_papers = df.loc[df['title'].str.lower().str.find(file_to_find) >= 0]
         if len(found_papers) == 0:
             _logger.error(
                 f"Couldn't find any paper with '{args.title}' in title")
