@@ -142,10 +142,10 @@ for conference in "${conferences[@]}"; do
 done
 
 if [ -n "$unify_papers" ]; then
-	$run_command python unify_papers_data.py
+	$run_command python unify_papers_data.py -l info
 fi
 
 if [ -n "$papers_with_code" ]; then
     echo -e "\nAdding information from papers with code"
-    $run_command python add_papers_with_code.py -p
+    $run_command python add_papers_with_code.py -p -l info
 fi
