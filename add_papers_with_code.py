@@ -196,7 +196,7 @@ if __name__ == '__main__':
     with open(args.codes_file) as f:
         papers_codes = json.load(f)
 
-    _logger.info(f'Loaded {len(papers_codes)} papers codes from papers with code')
+    _logger.info(f'Loaded {len(papers_codes):n} papers codes from papers with code')
 
     useful_keys = {
         'paper_url',
@@ -209,7 +209,7 @@ if __name__ == '__main__':
     # discarding papers with title longer than 230 characters and without year
     papers_codes = {d['paper_url']: d for d in papers_codes}
     papers_abstracts = [_merge_dicts(d, papers_codes) for d in papers_abstracts if d['title'] and 0 < len(d['title']) < 230 and len(d['date']) > 0]
-    _logger.info(f'After merging, {len(papers_abstracts)} papers remain from papers with code')
+    _logger.info(f'After merging, {len(papers_abstracts):n} papers remain from papers with code')
 
     # check if this paper is not already in the abstracts df
     # clean and compare the titles
