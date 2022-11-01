@@ -168,17 +168,17 @@ if __name__ == '__main__':
     assert len(df) == len(df_clean) == len(df_infos), \
         f'DataFrames must have the same length, but instead are {len(df)}, {len(df_clean)}, and {len(df_infos)}'
 
-    _logger.info(f'Loaded {len(df)} abstracts from {abstracts_file}')
-    _logger.info(f'Loaded {len(df_clean)} clean abstracts from {abstracts_clean_file}')
-    _logger.info(f'Loaded {len(df_urls)} urls from {urls_file}')
-    _logger.info(f'Loaded {len(df_infos)} infos from {papers_info_file}')
+    _logger.info(f'Loaded {len(df):n} abstracts from {abstracts_file}')
+    _logger.info(f'Loaded {len(df_clean):n} clean abstracts from {abstracts_clean_file}')
+    _logger.info(f'Loaded {len(df_urls):n} urls from {urls_file}')
+    _logger.info(f'Loaded {len(df_infos):n} infos from {papers_info_file}')
 
     # loading abstracts from papers with code
     papers_file = Path(args.papers_file).expanduser()
     with open(papers_file) as f:
         papers_abstracts = json.load(f)
 
-    _logger.info(f'Loaded {len(papers_abstracts)} papers from papers with code')
+    _logger.info(f'Loaded {len(papers_abstracts):n} papers from papers with code')
 
     useful_keys = {
         'abstract',
