@@ -38,53 +38,20 @@ def _convert_abstract_to_repr(d: Dict[str, Union[str, bool]]) -> Dict[str, Union
 
 
 def _clean_title(title: str, text_cleaner: TextCleaner) -> str:
-    pbar_desc_len = 30
-    def update_pbar(pbar, text):
-        pbar.set_description(text.ljust(pbar_desc_len))
-        pbar.update()
-
-    with tqdm(total=14, unit='step') as pbar:
-        clean_title = ftfy.fix_text(title.lower())
-        update_pbar(pbar, 'Fix unicode')
-
-        clean_title = text_cleaner.remove_accents(clean_title)
-        update_pbar(pbar, 'Remove accents')
-
-        clean_title = text_cleaner.remove_latex_commands(clean_title)
-        update_pbar(pbar, 'Remove latex commands')
-
-        clean_title = text_cleaner.remove_latex_inline_equations(clean_title)
-        update_pbar(pbar, 'Removing latex inline equations')
-
-        clean_title = clean_title.replace('\\', '')
-        update_pbar(pbar, 'Replacing backslash')
-
-        clean_title = text_cleaner.remove_symbols(clean_title)
-        update_pbar(pbar, 'Replacing symbols')
-
-        clean_title = clean_title.replace('--', '-')
-        update_pbar(pbar, 'Replacing double hyphen')
-
-        clean_title = clean_title.replace('–', '-')
-        update_pbar(pbar, 'Replacing hyphen')
-
-        clean_title = clean_title.replace('−', '-')
-        update_pbar(pbar, 'Replacing hyphen')
-
-        clean_title = ' '.join(clean_title.strip().split())
-        update_pbar(pbar, 'Removing trailing spaces')
-
-        clean_title = text_cleaner.remove_hyphens_slashes(clean_title)
-        update_pbar(pbar, 'Removing hyphens and slashes')
-
-        clean_title = text_cleaner.remove_stopwords(clean_title)
-        update_pbar(pbar, 'Removing stopwords')
-
-        clean_title = text_cleaner.plural_to_singular(clean_title)
-        update_pbar(pbar, 'Converting to singular')
-
-        clean_title = text_cleaner.replace_hyphens_by_underline(clean_title)
-        update_pbar(pbar, 'Replacing hyphens by underline')
+    clean_title = ftfy.fix_text(title.lower())
+    clean_title = text_cleaner.remove_accents(clean_title)
+    clean_title = text_cleaner.remove_latex_commands(clean_title)
+    clean_title = text_cleaner.remove_latex_inline_equations(clean_title)
+    clean_title = clean_title.replace('\\', '')
+    clean_title = text_cleaner.remove_symbols(clean_title)
+    clean_title = clean_title.replace('--', '-')
+    clean_title = clean_title.replace('–', '-')
+    clean_title = clean_title.replace('−', '-')
+    clean_title = ' '.join(clean_title.strip().split())
+    clean_title = text_cleaner.remove_hyphens_slashes(clean_title)
+    clean_title = text_cleaner.remove_stopwords(clean_title)
+    clean_title = text_cleaner.plural_to_singular(clean_title)
+    clean_title = text_cleaner.replace_hyphens_by_underline(clean_title)
 
     return clean_title
 
@@ -251,7 +218,7 @@ if __name__ == '__main__':
     df_urls = _clean_titles(df_urls, progress=True)
 
     text_cleaner = TextCleaner()
-    papers = {_clean_title(d['title'], text_cleaner): d for d in papers_abstracts if d['title'] is not None and d['abstract'] is not None}
+    papers = {_clean_title(d['title'], text_cleaner): d for d in tqdm(papers_abstracts, unit='paper', ncols=30) if d['title'] is not None and d['abstract'] is not None}
 
     # if it is, just add the new url to the urls dataframe
     # df_urls[df_urls.clean_title.isin(papers)] = df_urls[df_urls.clean_title.isin(papers)].apply(_add_urls, papers_urls=papers, axis=1)
