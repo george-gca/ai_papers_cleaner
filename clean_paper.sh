@@ -12,28 +12,53 @@ fi
 paper_separator='<#sep#>'
 
 # clean_abstracts=1
-clean_papers=1
 
-index=1
-# title="Moon IME: Neural-based Chinese Pinyin Aided Input Method with Customizable Association"
-conf=aaai
-year=2017
+# index=572
+title="Hybrid Item-Item Recommendation via Semi-Parametric Embedding"
+conf=ijcai
+year=2019
+stop_when="international joint artificial intelligence"
 
 
-# clean papers abstracts
+
 if [ -n "$clean_abstracts" ]; then
+    # clean papers abstracts
+    # select paper by index or title
     if [ -n "$index" ]; then
-        $run_command -f data/$conf/$year/abstracts.csv -a -i $index
+        # stop debugging when string is found
+        if [ -n "$stop_when" ]; then
+            $run_command -f data/$conf/$year/abstracts.csv -a --stop_when "$stop_when" -i $index
+        else
+            $run_command -f data/$conf/$year/abstracts.csv -a -i $index
+        fi
+
     else
-        $run_command -f data/$conf/$year/abstracts.csv -a -t "$title"
+        # stop debugging when string is found
+        if [ -n "$stop_when" ]; then
+            $run_command -f data/$conf/$year/abstracts.csv -a --stop_when "$stop_when" -t "$title"
+        else
+            $run_command -f data/$conf/$year/abstracts.csv -a -t "$title"
+        fi
+    fi
+
+else
+    # clean papers content
+    # select paper by index or title
+    if [ -n "$index" ]; then
+        # stop debugging when string is found
+        if [ -n "$stop_when" ]; then
+            $run_command -f data/$conf/$year/pdfs.csv -s "$paper_separator" --stop_when "$stop_when" -i $index
+        else
+            $run_command -f data/$conf/$year/pdfs.csv -s "$paper_separator" -i $index
+        fi
+
+    else
+        # stop debugging when string is found
+        if [ -n "$stop_when" ]; then
+            $run_command -f data/$conf/$year/pdfs.csv -s "$paper_separator" --stop_when "$stop_when" -t "$title"
+        else
+            $run_command -f data/$conf/$year/pdfs.csv -s "$paper_separator" -t "$title"
+        fi
     fi
 fi
 
-# clean papers content
-if [ -n "$clean_papers" ]; then
-    if [ -n "$index" ]; then
-        $run_command -f data/$conf/$year/pdfs.csv -s "$paper_separator" -i $index
-    else
-        $run_command -f data/$conf/$year/pdfs.csv -s "$paper_separator" -t "$title"
-    fi
-fi
