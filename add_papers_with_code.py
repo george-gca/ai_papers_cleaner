@@ -159,6 +159,7 @@ if __name__ == '__main__':
     # loading urls
     urls_file = Path(args.urls_file).expanduser()
     df_urls = pd.read_feather(urls_file)
+    # FIXME this is emptying the df_urls
     df_urls.dropna(inplace=True)
 
     # loading infos
