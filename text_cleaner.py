@@ -1842,24 +1842,59 @@ def _clean_title(paper: pd.Series) -> str:
     _logger.info(f'\nClean title:\n{text_cleaner._highlight_not_recognized_words(clean_title)}')
 
 
-def _clean_titles(df: pd.DataFrame) -> pd.DataFrame:
+def _clean_titles(df: pd.DataFrame, progress=False) -> pd.DataFrame:
     text_cleaner = TextCleaner()
 
-    df['clean_title'] = df['title'].str.lower()
-    df.loc[:, 'clean_title'] = df['clean_title'].apply(ftfy.fix_text)
-    df.loc[:, 'clean_title'] = df['clean_title'].apply(text_cleaner.remove_accents)
-    df.loc[:, 'clean_title'] = df['clean_title'].apply(text_cleaner.remove_latex_commands)
-    df.loc[:, 'clean_title'] = df['clean_title'].apply(text_cleaner.remove_latex_inline_equations)
-    df.loc[:, 'clean_title'] = df['clean_title'].str.replace(re.compile(r'\\'), '')
-    df.loc[:, 'clean_title'] = df['clean_title'].apply(text_cleaner.remove_symbols)
-    df.loc[:, 'clean_title'] = df['clean_title'].str.replace(re.compile(r'--'), '-')
-    df.loc[:, 'clean_title'] = df['clean_title'].str.replace(re.compile(r'–'), '-')
-    df.loc[:, 'clean_title'] = df['clean_title'].str.replace(re.compile(r'−'), '-')
-    df.loc[:, 'clean_title'] = df['clean_title'].str.strip().str.split().str.join(' ')
-    df.loc[:, 'clean_title'] = df['clean_title'].apply(text_cleaner.remove_hyphens_slashes)
-    df.loc[:, 'clean_title'] = df['clean_title'].apply(text_cleaner.remove_stopwords)
-    df.loc[:, 'clean_title'] = df['clean_title'].apply(text_cleaner.plural_to_singular)
-    df.loc[:, 'clean_title'] = df['clean_title'].apply(text_cleaner.replace_hyphens_by_underline)
+    pbar_desc_len = 30
+    def update_pbar(pbar, text):
+        pbar.set_description(text.ljust(pbar_desc_len))
+        pbar.update()
+
+    with tqdm(total=15, disable=not progress, unit='step') as pbar:
+        df['clean_title'] = df['title'].str.lower()
+        update_pbar(pbar, 'Lowering case')
+
+        df.loc[:, 'clean_title'] = df['clean_title'].apply(ftfy.fix_text)
+        update_pbar(pbar, 'Fix unicode')
+
+        df.loc[:, 'clean_title'] = df['clean_title'].apply(text_cleaner.remove_accents)
+        update_pbar(pbar, 'Remove accents')
+
+        df.loc[:, 'clean_title'] = df['clean_title'].apply(text_cleaner.remove_latex_commands)
+        update_pbar(pbar, 'Remove latex commands')
+
+        df.loc[:, 'clean_title'] = df['clean_title'].apply(text_cleaner.remove_latex_inline_equations)
+        update_pbar(pbar, 'Removing latex inline equations')
+
+        df.loc[:, 'clean_title'] = df['clean_title'].str.replace(re.compile(r'\\'), '')
+        update_pbar(pbar, 'Replacing backslash')
+
+        df.loc[:, 'clean_title'] = df['clean_title'].apply(text_cleaner.remove_symbols)
+        update_pbar(pbar, 'Replacing symbols')
+
+        df.loc[:, 'clean_title'] = df['clean_title'].str.replace(re.compile(r'--'), '-')
+        update_pbar(pbar, 'Replacing double hyphen')
+
+        df.loc[:, 'clean_title'] = df['clean_title'].str.replace(re.compile(r'–'), '-')
+        update_pbar(pbar, 'Replacing hyphen')
+
+        df.loc[:, 'clean_title'] = df['clean_title'].str.replace(re.compile(r'−'), '-')
+        update_pbar(pbar, 'Replacing hyphen')
+
+        df.loc[:, 'clean_title'] = df['clean_title'].str.strip().str.split().str.join(' ')
+        update_pbar(pbar, 'Removing trailing spaces')
+
+        df.loc[:, 'clean_title'] = df['clean_title'].apply(text_cleaner.remove_hyphens_slashes)
+        update_pbar(pbar, 'Removing hyphens and slashes')
+
+        df.loc[:, 'clean_title'] = df['clean_title'].apply(text_cleaner.remove_stopwords)
+        update_pbar(pbar, 'Removing stopwords')
+
+        df.loc[:, 'clean_title'] = df['clean_title'].apply(text_cleaner.plural_to_singular)
+        update_pbar(pbar, 'Converting to singular')
+
+        df.loc[:, 'clean_title'] = df['clean_title'].apply(text_cleaner.replace_hyphens_by_underline)
+        update_pbar(pbar, 'Replacing hyphens by underline')
 
     return df
 
