@@ -147,5 +147,5 @@ fi
 
 if [ -n "$papers_with_code" ]; then
     echo -e "\nAdding information from papers with code"
-    $run_command python add_papers_with_code.py
+    $run_command python add_papers_with_code.py -p
 fi

@@ -165,10 +165,20 @@ if __name__ == '__main__':
     df_infos = pd.read_feather(papers_info_file)
     df_infos.dropna(inplace=True)
 
+    assert len(df) == len(df_clean) == len(df_infos), \
+        f'DataFrames must have the same length, but instead are {len(df)}, {len(df_clean)}, and {len(df_infos)}'
+
+    _logger.info(f'Loaded {len(df)} abstracts from {abstracts_file}')
+    _logger.info(f'Loaded {len(df_clean)} clean abstracts from {abstracts_clean_file}')
+    _logger.info(f'Loaded {len(df_urls)} urls from {urls_file}')
+    _logger.info(f'Loaded {len(df_infos)} infos from {papers_info_file}')
+
     # loading abstracts from papers with code
     papers_file = Path(args.papers_file).expanduser()
     with open(papers_file) as f:
         papers_abstracts = json.load(f)
+
+    _logger.info(f'Loaded {len(papers_abstracts)} papers from papers with code')
 
     useful_keys = {
         'abstract',
@@ -186,6 +196,8 @@ if __name__ == '__main__':
     with open(args.codes_file) as f:
         papers_codes = json.load(f)
 
+    _logger.info(f'Loaded {len(papers_codes)} papers codes from papers with code')
+
     useful_keys = {
         'paper_url',
         'repo_url',
@@ -197,6 +209,7 @@ if __name__ == '__main__':
     # discarding papers with title longer than 230 characters and without year
     papers_codes = {d['paper_url']: d for d in papers_codes}
     papers_abstracts = [_merge_dicts(d, papers_codes) for d in papers_abstracts if d['title'] and 0 < len(d['title']) < 230 and len(d['date']) > 0]
+    _logger.info(f'After merging, {len(papers_abstracts)} papers remain from papers with code')
 
     # check if this paper is not already in the abstracts df
     # clean and compare the titles
@@ -354,7 +367,9 @@ if __name__ == '__main__':
     df_abstracts_clean.to_csv(papers_file.parent / 'abstracts_clean.csv', sep='|', index=False)
 
     # creating new abstracts_clean with added papers_with_code info
+    _logger.info(f'\nWe had clean abstracts for {len(df_clean):n} papers')
     df_clean = pd.concat([df_clean, df_abstracts_clean], ignore_index=True)
+    _logger.info(f'Now we have clean abstracts for {len(df_clean):n} papers')
     # df_clean.to_csv(abstracts_file.parent / 'abstracts_clean_pwc.csv', sep='|', index=False)
     df_clean['year'] = df_clean['year'].astype('int')
     df_clean.to_feather(abstracts_file.parent / 'abstracts_clean_pwc.feather', compression='zstd')
