@@ -83,6 +83,10 @@ def main(args):
             else:
                 _logger.warning(f'{len(papers_already_joined)} papers already joined from {conf} {year} out of {len(papers_titles)}')
 
+                if len(papers_already_joined) <= 10:
+                    for paper in papers_already_joined:
+                        _logger.info(f'\t{paper}')
+
             if _logger.isEnabledFor(logging.DEBUG):
                 for title in papers_already_joined:
                     _logger.debug(f'\t{title}')
@@ -108,7 +112,7 @@ def main(args):
         assert len(joined_abstracts) == len(joined_abstracts_clean) == len(joined_paper_info), \
             f'Number of papers information after {conf} {year} differ: {len(joined_abstracts)}, {len(joined_abstracts_clean)}, and {len(joined_paper_info)}'
 
-    _logger.info(f'Final sizes:\n\tabstracts: {len(joined_abstracts)}\n\tabstracts_clean: {len(joined_abstracts_clean)}\n\tpaper_info: {len(joined_paper_info)}\n\tpdfs_urls: {len(joined_pdfs_urls)}')
+    _logger.info(f'Final sizes:\n\tabstracts: {len(joined_abstracts):n}\n\tabstracts_clean: {len(joined_abstracts_clean):n}\n\tpaper_info: {len(joined_paper_info):n}\n\tpdfs_urls: {len(joined_pdfs_urls):n}')
 
     joined_abstracts.to_feather(data_dir / 'abstracts.feather', compression='zstd')
     joined_abstracts_clean.to_feather(data_dir / 'abstracts_clean.feather', compression='zstd')
