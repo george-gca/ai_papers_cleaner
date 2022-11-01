@@ -1815,6 +1815,7 @@ def _clean_papers(df: pd.DataFrame, show_progress: bool=False) -> pd.DataFrame:
 
     if total_papers - new_total_papers > 0:
         df = new_df
+        _logger.info(f'Dropped {total_papers - new_total_papers} papers')
 
     # _logger.info(f'lemmatizer cache info: {lemmatizer.cache_info()}')
 
@@ -2015,4 +2016,3 @@ if __name__ == '__main__':
                 new_file_name[:-1]) + '_clean.' + new_file_name[-1]
             _logger.info(f'Saving DataFrame to {new_file_name}')
             new_df.to_csv(Path(args.file).parent / new_file_name, sep='|', index=False)
-            assert len(df) == len(new_df), f'DataFrame size changed after cleaning: {len(df)} -> {len(new_df)}'
