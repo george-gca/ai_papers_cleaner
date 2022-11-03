@@ -1353,6 +1353,7 @@ def _clean_paper(paper: pd.Series, stop_when='') -> None:
 
     remove_first_introduction_occurrence = partial(text_cleaner.remove_first_word_occurrence, word='introduction')
     remove_last_conclusion_occurrence = partial(text_cleaner.remove_last_word_occurrence, word='conclusion')
+    remove_last_discussion_occurrence = partial(text_cleaner.remove_last_word_occurrence, word='discussion')
 
     _logger.debug(
         f'\nText from PDF:\n{Fore.GREEN}###########################{Fore.RESET}\n{text}\n###########################')
@@ -1416,6 +1417,10 @@ def _clean_paper(paper: pd.Series, stop_when='') -> None:
             text_cleaner._pretty_print(stop_when, text)
             return
         text = remove_last_conclusion_occurrence(text)
+        if stop and text.find(stop_when) >= 0:
+            text_cleaner._pretty_print(stop_when, text)
+            return
+        text = remove_last_discussion_occurrence(text)
         if stop and text.find(stop_when) >= 0:
             text_cleaner._pretty_print(stop_when, text)
             return
@@ -1618,6 +1623,7 @@ def _clean_papers(df: pd.DataFrame, show_progress: bool=False) -> pd.DataFrame:
 
     remove_first_introduction_occurrence = partial(text_cleaner.remove_first_word_occurrence, word='introduction')
     remove_last_conclusion_occurrence = partial(text_cleaner.remove_last_word_occurrence, word='conclusion')
+    remove_last_discussion_occurrence = partial(text_cleaner.remove_last_word_occurrence, word='discussion')
 
     # drop papers that are not usable
     total_papers = len(df)
@@ -1635,7 +1641,7 @@ def _clean_papers(df: pd.DataFrame, show_progress: bool=False) -> pd.DataFrame:
         pbar.set_description(text.ljust(pbar_desc_len))
         pbar.update()
 
-    with tqdm(total=53, disable=not show_progress, unit='step', ncols=250) as pbar:
+    with tqdm(total=56, disable=not show_progress, unit='step', ncols=250) as pbar:
         df.loc[:, 'paper'] = df['paper'].apply(literal_eval)
         update_pbar(pbar, 'Reading papers')
         df.loc[:, 'paper'] = df['paper'].apply(ftfy.fix_text)
@@ -1673,6 +1679,8 @@ def _clean_papers(df: pd.DataFrame, show_progress: bool=False) -> pd.DataFrame:
         update_pbar(pbar, 'Removing introduction title')
         df.loc[:, 'paper'] = df['paper'].apply(remove_last_conclusion_occurrence)
         update_pbar(pbar, 'Removing conclusion title')
+        df.loc[:, 'paper'] = df['paper'].apply(remove_last_discussion_occurrence)
+        update_pbar(pbar, 'Removing discussion title')
         df.loc[:, 'paper'] = df['paper'].apply(
             text_cleaner.replace_symbol_by_letters)
         update_pbar(pbar, 'Replacing symbols')
