@@ -295,7 +295,7 @@ if __name__ == '__main__':
     }
     add_to_abstracts = [_discard_keys(d, useful_keys) for d in papers_not_in]
     _logger.info(f'\nWe had abstracts for {len(df):n} papers')
-    df = df.append(add_to_abstracts, ignore_index=True)
+    df = pd.concat([df, pd.DataFrame(add_to_abstracts)], ignore_index=True)
     _logger.info(f'Now we have abstracts for {len(df):n} papers')
     # df.to_csv(abstracts_file.parent / 'abstracts_pwc.csv', sep='|', index=False)
     df['year'] = df['year'].astype('int')
@@ -323,7 +323,7 @@ if __name__ == '__main__':
     }
     add_to_paper_info = [_discard_keys(d, useful_keys) for d in papers_not_in]
     _logger.info(f'\nWe had info for {len(df_infos):n} papers')
-    df_infos = df_infos.append(add_to_paper_info, ignore_index=True)
+    df_infos = pd.concat([df_infos, pd.DataFrame(add_to_paper_info)], ignore_index=True)
     _logger.info(f'Now we have info for {len(df_infos):n} papers')
     # df_infos.to_csv(papers_info_file.parent / 'paper_info_pwc.csv', sep=';', index=False)
     df_infos['year'] = df_infos['year'].astype('int')
@@ -347,7 +347,7 @@ if __name__ == '__main__':
     }
     add_to_pdfs_urls = [_discard_keys(d, useful_keys) for d in papers_not_in]
     _logger.info(f'\nWe had urls for {len(df_urls):n} papers')
-    df_urls = df_urls.append(add_to_pdfs_urls, ignore_index=True)
+    df_urls = pd.concat([df_urls, pd.DataFrame(add_to_pdfs_urls)], ignore_index=True)
     _logger.info(f'Now we have urls for {len(df_urls):n} papers')
     # df_urls.to_csv(urls_file.parent / 'pdfs_urls_pwc.csv', sep='|', index=False)
     df_urls.to_feather(urls_file.parent / 'pdfs_urls_pwc.feather', compression='zstd')
