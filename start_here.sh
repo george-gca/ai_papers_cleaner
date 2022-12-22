@@ -75,9 +75,11 @@ conferences=(
     # "neurips 2019"
     # "neurips 2020"
     # "neurips 2021"
+    "neurips 2022"
     # "neurips_workshop 2019"
     # "neurips_workshop 2020"
     # "neurips_workshop 2021"
+    "neurips_workshop 2022"
     # "sigchi 2018"
     # "sigchi 2019"
     # "sigchi 2020"
@@ -101,11 +103,11 @@ conferences=(
 
 paper_separator='<#sep#>'
 
-# extract_pdfs=1
-# extract_urls=1
-# clean_abstracts=1
-# clean_papers=1
-# unify_papers=1
+extract_pdfs=1
+extract_urls=1
+clean_abstracts=1
+clean_papers=1
+unify_papers=1
 papers_with_code=1
 
 abstract_only_conferences=(
