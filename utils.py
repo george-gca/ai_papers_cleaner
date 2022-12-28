@@ -114,18 +114,15 @@ def parallelize_dataframe(df: pd.DataFrame, func: Callable, n_processes: int = c
     return df
 
 
-def setup_log(log_level: str = 'warning', log_file: Union[str, Path] = Path('run.log'), file_log_level: str = 'info', logs_to_silence: list[str] = []) -> logging.Logger:
+def setup_log(log_level: str = 'warning', log_file: Union[str, Path] = Path('run.log'), file_log_level: str = 'info', logs_to_silence: list[str] = []) -> None:
     """
     Setup the logging.
 
     Args:
-        log_level (int): stdout log level. Defaults to logging.WARNING.
+        log_level (str): stdout log level. Defaults to 'warning'.
         log_file (Union[str, Path]): file where the log output should be stored. Defaults to 'run.log'.
-        file_log_level (int): file log level. Defaults to logging.DEBUG.
-        logs_to_silence (list[str]): list of loggers to be silenced. Useful when using log level < logging.WARNING. Defaults to [].
-
-    Returns:
-        logging.Logger: default logger with given name
+        file_log_level (str): file log level. Defaults to 'info'.
+        logs_to_silence (list[str]): list of loggers to be silenced. Useful when using log level < 'warning'. Defaults to [].
     """
     # TODO: fix this according to this
     # https://stackoverflow.com/questions/384076/how-can-i-color-python-logging-output
@@ -158,7 +155,7 @@ def setup_log(log_level: str = 'warning', log_file: Union[str, Path] = Path('run
     stderr_handler.setLevel(log_level)
 
     # create a logging format
-    if log_level >= logging.INFO:
+    if log_level >= logging.WARNING:
         stderr_formatter = logging.Formatter('{message}', style='{')
     else:
         stderr_formatter = logging.Formatter(
@@ -172,7 +169,7 @@ def setup_log(log_level: str = 'warning', log_file: Union[str, Path] = Path('run
     if isinstance(log_file, str):
         log_file = Path(log_file).expanduser()
 
-    file_handler = RotatingFileHandler(log_file, maxBytes=5000000, backupCount=5)  # ~ 5 MB
+    file_handler = RotatingFileHandler(log_file, maxBytes=5_000_000, backupCount=5)  # ~ 5 MB
     file_handler.setLevel(file_log_level)
 
     # https://docs.python.org/3/library/logging.html#logrecord-attributes
