@@ -75,11 +75,11 @@ conferences=(
     # "neurips 2019"
     # "neurips 2020"
     # "neurips 2021"
-    "neurips 2022"
+    # "neurips 2022"
     # "neurips_workshop 2019"
     # "neurips_workshop 2020"
     # "neurips_workshop 2021"
-    "neurips_workshop 2022"
+    # "neurips_workshop 2022"
     # "sigchi 2018"
     # "sigchi 2019"
     # "sigchi 2020"
@@ -99,6 +99,7 @@ conferences=(
     # "wacv 2020"
     # "wacv 2021"
     # "wacv 2022"
+    "wacv 2023"
 )
 
 paper_separator='<#sep#>'

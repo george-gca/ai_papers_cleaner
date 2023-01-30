@@ -104,6 +104,7 @@ supported_conferences = [
     'wacv/2020',
     'wacv/2021',
     'wacv/2022',
+    'wacv/2023',
 ]
 
 
