@@ -31,7 +31,7 @@ def extract_text(filepath: str) -> str:
     for i in range(len(pdf)):
         page = pdf.get_page(i)
         text_page = page.get_textpage()
-        text += text_page.get_text()
+        text += text_page.get_text_range()
         text += "\n"
         [g.close() for g in (text_page, page)]
     pdf.close()
