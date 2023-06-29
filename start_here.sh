@@ -129,6 +129,7 @@ for conference in "${conferences[@]}"; do
     if [ -n "$extract_pdfs" ] && [[ ! " ${abstract_only_conferences[*]} " =~ " ${conf_year[0]} " ]]; then
         echo -e "\nExtracting pdfs for ${conf_year[0]} ${conf_year[1]}"
         $run_command python pdf_extractor.py -p -s "$paper_separator" -c ${conf_year[0]} -y ${conf_year[1]}
+        # $run_command python pdf_extractor.py -p -s "$paper_separator" -c ${conf_year[0]} -y ${conf_year[1]} -f "Lee_Revisiting_Self-Similarity_Structural_Embedding_for_Image_Retrieval_CVPR_2023" -l debug
     fi
 
     # extract urls from pdf and save csv with titles and all found urls
