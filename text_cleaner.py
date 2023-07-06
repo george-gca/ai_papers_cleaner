@@ -282,8 +282,8 @@ class TextCleaner():
         ]
 
         self._phrases_to_remove = [
-            '(ablation studies )?we (also )?conduct(ed)? ablation studies( to)?',
-            'ablation studies',
+            '(ablation stud(y|ies) )?we (also )?conduct(ed)? ablation stud(y|ies)( to)( demonstrate the (\w)+ of (our|the)( proposed)?( implementation| method| solution)?)?',
+            'ablation stud(y|ies)',
             '(these |both the |all the |the first [\w]+ |first [\w]+ |the )?(authors )?contribute(d)? equally( to this work)?',
             'in fact',
             'corresponding author',
@@ -317,7 +317,7 @@ class TextCleaner():
             '(the |this )?(work|research|paper) (is|was) (partially )?(done|funded by|supported( in part(s)?)? by)',
             'joint research project with youtu lab of tencent',
             '((the )?code )?(is |will be )?available at',
-            'this [\w\s\d]+ paper is the open access version provided by [\w\s\d\-_]+ except for this watermark it is identical to the accepted version the final published version of the proceedings is available on ieee xplore',
+            'this [\w\d]+ paper is the open access version provided by [\w\s\d\-_]+ except for this watermark it is identical to the accepted version the final published version of the proceedings is available on ieee xplore',
         ]
 
         self._remaining_two_chars = [
