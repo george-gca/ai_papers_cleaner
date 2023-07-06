@@ -14,11 +14,10 @@ paper_separator='<#sep#>'
 # clean_abstracts=1
 
 # index=572
-title="Hybrid Item-Item Recommendation via Semi-Parametric Embedding"
-conf=ijcai
-year=2019
-stop_when="international joint artificial intelligence"
-
+title="StyleIPSB: Identity-Preserving Semantic Basis of StyleGAN for High Fidelity Face Swapping"
+conf=cvpr
+year=2023
+stop_when="provided computer vision foundation except"
 
 
 if [ -n "$clean_abstracts" ]; then

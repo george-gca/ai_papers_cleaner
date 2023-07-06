@@ -110,7 +110,7 @@ conferences=(
 
 paper_separator='<#sep#>'
 
-extract_pdfs=1
+# extract_pdfs=1
 extract_urls=1
 clean_abstracts=1
 clean_papers=1
