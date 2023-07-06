@@ -98,6 +98,7 @@ class TextCleaner():
             '6_bit',
             '7_bit',
             '8_bit',
+            '16_bit',
             'accuracy',
             'achieve',
             'approximability',
@@ -309,12 +310,14 @@ class TextCleaner():
             '(in )?the [\w]+ (row|column)(s)?( we)?( show(s)?)?( that| the)?',
             '(in )?each (row|column)(s)?(we show( that| the)?)?',
             # '(in )?(the )?([\w]+|each) ([\w]+ )?(row|column)(s)?( show(s)?)?( that| the)?',
-            '(the |this )?(work|research|paper) was (partially )?(done|funded by|supported by) ([\w\s\d\-\_,]+ \(((, | and )?no. [\d\w\-\s]+)+\))+.',
-            '(the |this )?(work|research|paper) was (partially )?(done|funded by|supported by) [\w\s\d\-\_]+(no|and no)+ ([\w\d\-\_]+)*',
-            '(the |this )?(work|research|paper) was (partially )?(done|funded by|supported by) [\w\s\d\-\_]+\((grant no(.)? [\d]+| and |, and |no(.)? [\d]+)+\)',
-            '(the |this )?(work|research|paper) was (partially )?(done|funded by|supported by)',
+            '(the |this )?(work|research|paper) (is|was) (partially )?(done|funded by|supported( in part(s)?)? by) ([\w\s\d\-\_,]+ \(((, | and )?no. [\d\w\-\s]+)+\))+.',
+            '(the |this )?(work|research|paper) (is|was) (partially )?(done|funded by|supported( in part(s)?)? by) [\w\s\d\-\_]+(no|and no)+ ([\w\d\-\_]+)*',
+            '(the |this )?(work|research|paper) (is|was) (partially )?(done|funded by|supported( in part(s)?)? by) [\w\s\d\-\_]+\((grant no(.)? [\d]+| and |, and |no(.)? [\d]+)+\)',
+            '(the |this )?(work|research|paper) (is|was) (partially )?(done|funded by|supported( in part(s)?)? by) [\d\s\w\-\_]+ of china',
+            '(the |this )?(work|research|paper) (is|was) (partially )?(done|funded by|supported( in part(s)?)? by)',
             'joint research project with youtu lab of tencent',
-            '(the code )?(is |will be )?available at',
+            '((the )?code )?(is |will be )?available at',
+            'this [\w\s\d]+ paper is the open access version provided by [\w\s\d\-_]+ except for this watermark it is identical to the accepted version the final published version of the proceedings is available on ieee xplore',
         ]
 
         self._remaining_two_chars = [
@@ -1835,8 +1838,8 @@ def _clean_title(paper: pd.Series) -> str:
     _logger.info(f'\nTitle: \n{paper["title"]}')
 
     text_cleaner = TextCleaner(debug=True)
-    clean_title = paper['title'].lower()
-    clean_title = ftfy.fix_text(clean_title)
+    clean_title = ftfy.fix_text(paper['title'])
+    clean_title = clean_title.lower()
     clean_title = text_cleaner.remove_accents(clean_title)
     clean_title = text_cleaner.remove_latex_commands(clean_title)
     clean_title = text_cleaner.remove_latex_inline_equations(clean_title)
@@ -1863,11 +1866,11 @@ def _clean_titles(df: pd.DataFrame, progress=False) -> pd.DataFrame:
         pbar.update()
 
     with tqdm(total=15, disable=not progress, unit='step') as pbar:
-        df['clean_title'] = df['title'].str.lower()
-        update_pbar(pbar, 'Lowering case')
-
-        df.loc[:, 'clean_title'] = df['clean_title'].apply(ftfy.fix_text)
+        df.loc[:, 'clean_title'] = df['title'].apply(ftfy.fix_text)
         update_pbar(pbar, 'Fix unicode')
+
+        df['clean_title'] = df['clean_title'].str.lower()
+        update_pbar(pbar, 'Lowering case')
 
         df.loc[:, 'clean_title'] = df['clean_title'].apply(text_cleaner.remove_accents)
         update_pbar(pbar, 'Remove accents')
