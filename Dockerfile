@@ -2,7 +2,7 @@
 # ==================================================================
 
 # FROM python:latest
-FROM python:3.10
+FROM python:3.11
 
 ARG GROUPID=901
 ARG GROUPNAME=cleaner
@@ -61,7 +61,8 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
     # https://github.com/jaraco/inflect/pull/167
     # https://github.com/jaraco/inflect/pull/168
     $PIP_INSTALL \
-        git+https://github.com/george-gca/inflect@fix_s_plural_noun && \
+        # git+https://github.com/george-gca/inflect@fix_s_plural_noun && \
+        git+https://github.com/george-gca/inflect && \
 
 # ==================================================================
 # config & cleanup

@@ -1878,19 +1878,19 @@ def _clean_titles(df: pd.DataFrame, progress=False) -> pd.DataFrame:
         df.loc[:, 'clean_title'] = df['clean_title'].apply(text_cleaner.remove_latex_inline_equations)
         update_pbar(pbar, 'Removing latex inline equations')
 
-        df.loc[:, 'clean_title'] = df['clean_title'].str.replace(re.compile(r'\\'), '')
+        df.loc[:, 'clean_title'] = df['clean_title'].str.replace(re.compile(r'\\'), '', regex=True)
         update_pbar(pbar, 'Replacing backslash')
 
         df.loc[:, 'clean_title'] = df['clean_title'].apply(text_cleaner.remove_symbols)
         update_pbar(pbar, 'Replacing symbols')
 
-        df.loc[:, 'clean_title'] = df['clean_title'].str.replace(re.compile(r'--'), '-')
+        df.loc[:, 'clean_title'] = df['clean_title'].str.replace(re.compile(r'--'), '-', regex=True)
         update_pbar(pbar, 'Replacing double hyphen')
 
-        df.loc[:, 'clean_title'] = df['clean_title'].str.replace(re.compile(r'–'), '-')
+        df.loc[:, 'clean_title'] = df['clean_title'].str.replace(re.compile(r'–'), '-', regex=True)
         update_pbar(pbar, 'Replacing hyphen')
 
-        df.loc[:, 'clean_title'] = df['clean_title'].str.replace(re.compile(r'−'), '-')
+        df.loc[:, 'clean_title'] = df['clean_title'].str.replace(re.compile(r'−'), '-', regex=True)
         update_pbar(pbar, 'Replacing hyphen')
 
         df.loc[:, 'clean_title'] = df['clean_title'].str.strip().str.split().str.join(' ')
