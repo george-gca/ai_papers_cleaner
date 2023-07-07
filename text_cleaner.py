@@ -322,9 +322,12 @@ class TextCleaner():
         ]
 
         self._remaining_two_chars = [
-            '\\b(x|y|z|w|i|j|k)(_)?[\d]\\b',
-            '\\b(x|y|z|w|i|j|k)(_)?[aeiouxyzwjk]\\b',
+            '\\b[xyzwhijklt](_)?[\d]\\b',
+            '\\b[\d](_)?[xyzwhijklt]\\b',
+            '\\b[xyzwhijklt](_)?[aeiouxyzwhijklt]\\b',
             '\\bth\\b',
+            '\\b_[\d\w]\\b',
+            '\\b[\d\w]_\\b',
         ]
 
         self._symbols_dict = {
