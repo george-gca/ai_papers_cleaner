@@ -328,6 +328,7 @@ class TextCleaner():
             '\\bth\\b',
             '\\b_[\d\w]\\b',
             '\\b[\d\w]_\\b',
+            '\\b_\\b',
         ]
 
         self._symbols_dict = {
