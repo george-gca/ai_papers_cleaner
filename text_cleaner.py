@@ -284,6 +284,7 @@ class TextCleaner():
         self._phrases_to_remove = [
             '(ablation stud(y|ies) )?we (also )?conduct(ed)? ablation stud(y|ies)( to)( demonstrate the (\w)+ of (our|the)( proposed)?( implementation| method| solution)?)?',
             'ablation stud(y|ies)',
+            '(ap(\w|[\d]+)? )+',
             '(these |both the |all the |the first [\w]+ |first [\w]+ |the )?(authors )?contribute(d)? equally( to this work)?',
             'in fact',
             'corresponding author',
@@ -300,7 +301,7 @@ class TextCleaner():
             '(a number of |most |in )?(recent|related|previous|prior) (work|year)[s]?( have)?( also)?',
             '(to the )?best of our knowledge',
             '(we )?would like( to)?',
-            '(we )?conduct(ed)? extensive experiment(s)?',
+            '(we )?conduct(ed)? (extensive |numerous |several )?experiment(s)?',
             'supplementary material[s]?',
             'all rights reserved(.|,)?',
             'best viewed in color',
