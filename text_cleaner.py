@@ -174,7 +174,19 @@ class TextCleaner():
         self._non_aglutinable_words = {
             'anew',
             'anews',
+            'calla',
             'fora',
+            'fork',
+            'iall',
+            'lets',
+            'overall',
+            'pager',
+            'sand',
+            'seethe',
+            'sets',
+            'shave',
+            'thank',
+            'thebe',
             'thew',
             'thews',
             'wheres',
@@ -648,7 +660,7 @@ class TextCleaner():
 
         return text
 
-    def aglutinate_words(self, text: str, spell_checker: enchant.Dict = enchant.Dict("en_US")) -> str:
+    def aglutinate_words(self, text: str, spell_checker: enchant.Dict = enchant.Dict("en_US"), min_occurrences: int = 5) -> str:
         self._logger.debug(
             f'\n{Fore.GREEN}###########################{Fore.RESET}\n\nAglutinating words separated by "-":')
 
@@ -668,21 +680,16 @@ class TextCleaner():
             word = re.sub(regex, '\\1\\2', original_word)
             if word not in not_existing_words_found:
                 if spell_checker.check(word) or word in self._new_words:
-                    if self._debug:
-                        self._logger.debug(f"{repr(word)} exists")
+                    self._logger.debug(f'{Fore.RED}{original_word}{Fore.RESET} -> {Fore.GREEN}{word}{Fore.RESET}')
                     text = re.sub(original_word, word, text)
-                elif re.search(word, text) != None:
-                    if self._debug:
-                        self._logger.debug(f"{repr(word)} exists")
+                elif re.search(word, text) != None and len(re.findall(word, text)) > min_occurrences:
+                    self._logger.debug(f'{Fore.RED}{original_word}{Fore.RESET} -> {Fore.GREEN}{word}{Fore.RESET} (happens more than {min_occurrences}x)')
                     self._new_words.add(word)
                     text = re.sub(original_word, word, text)
                 else:
                     hyphen_word = re.sub(regex, '\\1_\\2', original_word)
-
-                    if self._debug:
-                        self._logger.debug(
-                            f"{repr(word)} doesn't exist. Using {repr(hyphen_word)} instead")
-
+                    self._logger.debug(f'Keep {Fore.GREEN}{hyphen_word}{Fore.RESET}')
+                    
                     if hyphen_word != original_word:
                         text = re.sub(original_word, hyphen_word, text)
 
@@ -690,10 +697,7 @@ class TextCleaner():
 
             else:
                 hyphen_word = re.sub(regex, '\\1_\\2', original_word)
-
-                if self._debug:
-                    self._logger.debug(
-                        f"{repr(word)} doesn't exist. Using {repr(hyphen_word)} instead")
+                self._logger.debug(f'Keep {Fore.GREEN}{hyphen_word}{Fore.RESET}')
 
                 if hyphen_word != original_word:
                     text = re.sub(original_word, hyphen_word, text)
@@ -703,7 +707,7 @@ class TextCleaner():
 
         return text
 
-    def aglutinate_word_sequences(self, text: str, spell_checker: enchant.Dict = enchant.Dict("en_US"), max_ngram: int = 2, min_times: int = 5) -> str:
+    def aglutinate_word_sequences(self, text: str, spell_checker: enchant.Dict = enchant.Dict("en_US"), max_ngram: int = 2, min_occurrences: int = 5) -> str:
         self._logger.debug(
             f'\n{Fore.GREEN}###########################{Fore.RESET}\n\nAglutinating words separated by " ":')
 
@@ -718,7 +722,12 @@ class TextCleaner():
             self._logger.debug(f'Replacing {n}-grams')
             i = n
             while i < len(words):
-                if any((len(w) > 2 for w in words[i-n:i])):
+                # only agglutinate if at least one of the words has more than 2 chars, none starts or ends with - and the first one is not in
+                # since it could alter the meaning of the sentence (e.g.: in different - indifferent)
+                if any((len(w) > 2 for w in words[i-n:i])) and \
+                    not any((w.startswith('-') or w.endswith('-') for w in words[i-n:i])) and \
+                    words[i-n] != 'in':
+
                     ngram = ''.join(words[i-n:i])
                     if ngram not in self._non_aglutinable_words and ngram[:5] != 'anon-':
                         if _recognized(ngram):
@@ -734,10 +743,10 @@ class TextCleaner():
                                 j -= 1
 
                         # only consider if the ngram happens at least X times
-                        elif re.search(ngram, text) != None and len(re.findall(ngram, text)) > min_times:
+                        elif re.search(ngram, text) != None and len(re.findall(ngram, text)) > min_occurrences:
                             if self._debug:
                                 ngram_orig = ' '.join(words[i-n:i])
-                                self._logger.debug(f'{Fore.RED}{ngram_orig}{Fore.RESET} -> {Fore.GREEN}{ngram}{Fore.RESET} (happens more than {min_times}x)')
+                                self._logger.debug(f'{Fore.RED}{ngram_orig}{Fore.RESET} -> {Fore.GREEN}{ngram}{Fore.RESET} (happens more than {min_occurrences}x)')
 
                             self._new_words.add(ngram)
                             words[i-n] = ngram
