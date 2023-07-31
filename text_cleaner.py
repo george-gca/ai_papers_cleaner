@@ -40,13 +40,6 @@ BG_HIGHLIGHT_COLOR = Back.GREEN
 # international_joint_artificial_intelligence
 # introduction_deep_neural_network
 
-# avoid removing s of these words:
-# cros_entropy_los
-# without_los_generality_assume
-# neural_architecture_search_na
-# principal_component_analysi_pca
-# binary_cros_entropy_los
-
 # TODO: check for unknown words. if an unknown word is found, check for it as separated words
 # if it exists, replace them by the correct words
 
@@ -162,8 +155,15 @@ class TextCleaner():
         }
 
         non_singularizable_words = {
+            'address',
+            'analysis',
+            'bias',
+            'class',
+            'cross',
+            'fairness',
             'nas', # neural architecture search
-            'thus'
+            'loss',
+            'thus',
         }
 
         for w in non_singularizable_words:
@@ -557,7 +557,6 @@ class TextCleaner():
         else:
             self._logger.debug('Text kept the same')
 
-
     def _highlight_not_recognized_words(self, text: str, spell_checker: enchant.Dict = enchant.Dict("en_US"),
                                         extra_lemmas_dict: Dict[str, str] = {}, color: int = Back.BLUE) -> str:
         def _recognized(word: str) -> bool:
@@ -692,6 +691,52 @@ class TextCleaner():
             match = regex.search(text[previous_index:])
 
         return text
+
+    def aglutinate_word_sequences(self, text: str, spell_checker: enchant.Dict = enchant.Dict("en_US"), max_ngram: int = 2) -> str:
+        self._logger.debug(
+            f'\n{Fore.GREEN}###########################{Fore.RESET}\n\nAglutinating words separated by " ":')
+
+        def _recognized(word: str) -> bool:
+            if len(word) > 0 and spell_checker.check(word) or word in self._new_words:
+                return True
+            else:
+                return False
+
+        words = text.strip().split()
+        for n in reversed(range(2, max_ngram + 1)):
+            self.logger.debug(f'Replacing {n}-grams')
+            i = n
+            while i < len(words):
+                ngram = ''.join(words[i-n:i])
+                if _recognized(ngram):
+                    if self._debug:
+                        ngram_orig = ' '.join(words[i-n:i])
+                        self._logger.debug(f'{Fore.RED}{ngram_orig}{Fore.RESET} -> {Fore.GREEN}{ngram}{Fore.RESET}')
+
+                    words[i-n] = ngram
+                    i -= n-1
+                    j = n-1
+                    while j > 0:
+                        words.pop(i)
+                        j -= 1
+
+                elif re.search(ngram, text) != None:
+                    if self._debug:
+                        ngram_orig = ' '.join(words[i-n:i])
+                        self._logger.debug(f'{Fore.RED}{ngram_orig}{Fore.RESET} -> {Fore.GREEN}{ngram}{Fore.RESET}')
+
+                    self._new_words.add(ngram)
+                    words[i-n] = ngram
+                    i -= n-1
+                    j = n-1
+                    while j > 0:
+                        words.pop(i)
+                        j -= 1
+
+                else:
+                    i += 1
+
+        return ' '.join(words)
 
     def plural_to_singular(self, text: str,
                            lemmatizer: Callable[[
@@ -1242,6 +1287,10 @@ def _clean_abstract(paper: pd.Series, stop_when='') -> None:
     if stop and abstract.find(stop_when) >= 0:
         text_cleaner._pretty_print(stop_when, abstract)
         return
+    abstract = text_cleaner.aglutinate_word_sequences(abstract)
+    if stop and abstract.find(stop_when) >= 0:
+        text_cleaner._pretty_print(stop_when, abstract)
+        return
     abstract = text_cleaner.aglutinate_words(abstract)
     if stop and abstract.find(stop_when) >= 0:
         text_cleaner._pretty_print(stop_when, abstract)
@@ -1326,6 +1375,8 @@ def _clean_abstracts(df: pd.DataFrame) -> pd.DataFrame:
         text_cleaner.remove_metrics)
     df.loc[:, 'abstract'] = df['abstract'].apply(
         text_cleaner.remove_numbers)
+    df.loc[:, 'abstract'] = df['abstract'].apply(
+        text_cleaner.aglutinate_word_sequences, spell_checker=spell_checker)
     df.loc[:, 'abstract'] = df['abstract'].apply(
         text_cleaner.aglutinate_words, spell_checker=spell_checker)
     df.loc[:, 'abstract'] = df['abstract'].apply(
@@ -1550,6 +1601,10 @@ def _clean_paper(paper: pd.Series, stop_when='') -> None:
             text_cleaner._pretty_print(stop_when, text)
             return
         text = text_cleaner.remove_numbers(text)
+        if stop and text.find(stop_when) >= 0:
+            text_cleaner._pretty_print(stop_when, text)
+            return
+        text = text_cleaner.aglutinate_word_sequences(text)
         if stop and text.find(stop_when) >= 0:
             text_cleaner._pretty_print(stop_when, text)
             return
@@ -1778,6 +1833,9 @@ def _clean_papers(df: pd.DataFrame, show_progress: bool=False) -> pd.DataFrame:
         df.loc[:, 'paper'] = df['paper'].apply(
             text_cleaner.remove_numbers)
         update_pbar(pbar, 'Removing numbers')
+        df.loc[:, 'paper'] = df['paper'].apply(
+            text_cleaner.aglutinate_word_sequences, spell_checker=spell_checker)
+        update_pbar(pbar, 'Aglutinating words sequences')
         df.loc[:, 'paper'] = df['paper'].apply(
             text_cleaner.aglutinate_words, spell_checker=spell_checker)
         update_pbar(pbar, 'Aglutinating words')
