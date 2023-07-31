@@ -135,6 +135,7 @@ class TextCleaner():
             'minpooling',
             'misclassification',
             'moire',
+            'orthogonalization',
             'outperform',
             'pre',
             'pseudo_label',
@@ -157,6 +158,7 @@ class TextCleaner():
         non_singularizable_words = {
             'address',
             'analysis',
+            'basis',
             'bias',
             'class',
             'cross',
@@ -168,6 +170,15 @@ class TextCleaner():
 
         for w in non_singularizable_words:
             _grammar.defnoun(w, w)
+
+        self._non_aglutinable_words = {
+            'anew',
+            'anews',
+            'fora',
+            'thew',
+            'thews',
+            'wheres',
+        }
 
         # acl conferences regex
         prefix_proceedings = '(in )?proceedings of [\d\w\s\(\)#&\-\−\–:,]+'
@@ -692,7 +703,7 @@ class TextCleaner():
 
         return text
 
-    def aglutinate_word_sequences(self, text: str, spell_checker: enchant.Dict = enchant.Dict("en_US"), max_ngram: int = 2) -> str:
+    def aglutinate_word_sequences(self, text: str, spell_checker: enchant.Dict = enchant.Dict("en_US"), max_ngram: int = 2, min_times: int = 5) -> str:
         self._logger.debug(
             f'\n{Fore.GREEN}###########################{Fore.RESET}\n\nAglutinating words separated by " ":')
 
@@ -704,34 +715,43 @@ class TextCleaner():
 
         words = text.strip().split()
         for n in reversed(range(2, max_ngram + 1)):
-            self.logger.debug(f'Replacing {n}-grams')
+            self._logger.debug(f'Replacing {n}-grams')
             i = n
             while i < len(words):
-                ngram = ''.join(words[i-n:i])
-                if _recognized(ngram):
-                    if self._debug:
-                        ngram_orig = ' '.join(words[i-n:i])
-                        self._logger.debug(f'{Fore.RED}{ngram_orig}{Fore.RESET} -> {Fore.GREEN}{ngram}{Fore.RESET}')
+                if any((len(w) > 2 for w in words[i-n:i])):
+                    ngram = ''.join(words[i-n:i])
+                    if ngram not in self._non_aglutinable_words and ngram[:5] != 'anon-':
+                        if _recognized(ngram):
+                            if self._debug:
+                                ngram_orig = ' '.join(words[i-n:i])
+                                self._logger.debug(f'{Fore.RED}{ngram_orig}{Fore.RESET} -> {Fore.GREEN}{ngram}{Fore.RESET}')
 
-                    words[i-n] = ngram
-                    i -= n-1
-                    j = n-1
-                    while j > 0:
-                        words.pop(i)
-                        j -= 1
+                            words[i-n] = ngram
+                            i -= n-1
+                            j = n-1
+                            while j > 0:
+                                words.pop(i)
+                                j -= 1
 
-                elif re.search(ngram, text) != None:
-                    if self._debug:
-                        ngram_orig = ' '.join(words[i-n:i])
-                        self._logger.debug(f'{Fore.RED}{ngram_orig}{Fore.RESET} -> {Fore.GREEN}{ngram}{Fore.RESET}')
+                        # only consider if the ngram happens at least X times
+                        elif re.search(ngram, text) != None and len(re.findall(ngram, text)) > min_times:
+                            if self._debug:
+                                ngram_orig = ' '.join(words[i-n:i])
+                                self._logger.debug(f'{Fore.RED}{ngram_orig}{Fore.RESET} -> {Fore.GREEN}{ngram}{Fore.RESET} (happens more than {min_times}x)')
 
-                    self._new_words.add(ngram)
-                    words[i-n] = ngram
-                    i -= n-1
-                    j = n-1
-                    while j > 0:
-                        words.pop(i)
-                        j -= 1
+                            self._new_words.add(ngram)
+                            words[i-n] = ngram
+                            i -= n-1
+                            j = n-1
+                            while j > 0:
+                                words.pop(i)
+                                j -= 1
+
+                        else:
+                            i += 1
+
+                    else:
+                        i += 1
 
                 else:
                     i += 1
