@@ -13,9 +13,9 @@ paper_separator='<#sep#>'
 
 # clean_abstracts=1
 
-# index=572
-title="StyleIPSB: Identity-Preserving Semantic Basis of StyleGAN for High Fidelity Face Swapping"
-conf=cvpr
+index=1
+# title="StyleIPSB: Identity-Preserving Semantic Basis of StyleGAN for High Fidelity Face Swapping"
+conf=icml
 year=2023
 stop_when="provided computer vision foundation except"
 
