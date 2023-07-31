@@ -207,7 +207,7 @@ class TextCleaner():
 
         num_or_hyphen = '[\d\-\−\–]+'
         num_colon_hyphen_par = '[\d:\-\−\–\(\)]+'
-        ordinal_num = '[\d]+(st|nd|rd|th)'
+        ordinal_num = '[\d]+[\s]*(st|nd|rd|th)'
 
         self._bib_info_to_remove = [
             'acm transactions on graphics',
@@ -269,7 +269,7 @@ class TextCleaner():
             # f'proceedings of the [\d]+[\s]*(st|nd|rd|th) international conference on [\w\s,\-\−\–]+ pmlr ([\d,\s]+.)? copyright ([\d]+ )?by the (author|au- thor)\(s\)',
             f'proceedings of the {ordinal_num} workshop [\w\s\-\−\–\(\)]+, page(s)? {num_or_hyphen} [\w\s]+, [\w\s]+( \(online\))?, [\w]+ [\d]+, [\d]+',
             '(©)?[\d]+ association for computational linguistics( [\d]+)?',
-            f'proceedings of the [\d]+[\s]*(st|nd|rd|th) international conference on [\w\s,\-\−\–]+ pmlr ([\d,\s]+.)? copyright ([\d]+ )?by the author\(s\)',
+            f'proceedings of the {ordinal_num} international conference on [\w\s,\-\−\–]+ pmlr ([\d,\s]+.)? copyright ([\d]+ )?by the author\(s\)',
             'proceedings of the (st|nd|rd|th) international conference on machine learning online pmlr copyright by the author',
             f'proceedings of the {ordinal_num} international conference on machine learning \(icml [\d]+\), [\d]+',
             '(proceedings of the|in) [\w]+(-[\w]+)? aaai conference on (artificial|artifcial|artifi- cial) intelligence(, [\d]+| \(aaai-[\d]+\))?',
@@ -281,7 +281,7 @@ class TextCleaner():
             f'[\w]+, [\w]+( \(online\))?, [\w]+ {num_or_hyphen}, [\d]+. (©)?[\d]+ association for computational linguistics proceedings of the {ordinal_num}[\w\s]+, page(s)? {num_or_hyphen}',
             '[\w]*proceedings of the [\w\-]+ international joint conference on (artificial|artifcial|artifi- cial) intelligence \([\d\w\-]+\)',
             'published as a conference paper at [\w]+( [\d]+)?',
-            'proceedings of the [\d]+[\s]*(st|nd|rd|th) international conference on machine learning, [\w]+( [\w]+)*, ([\w]+( [\w]+)*, )*pmlr [\d]+, [\d]+. copyright( [\d]+)? by the author(\(s\))?',
+            f'proceedings of the {ordinal_num} international conference on machine learning, [\w]+( [\w]+)*, ([\w]+(, [\w]+)*)*[,.]? pmlr [\d]+, [\d]+. [\w\-]+( [\d]+)? by the author(\(s\))?',
             'published as a conference paper at [\w]+( [\d]+)',
             f'[\w]+ state university {num_colon_hyphen_par}',
             'springer science & business media(, [\d]+)?',
