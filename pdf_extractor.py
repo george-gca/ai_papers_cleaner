@@ -144,37 +144,35 @@ if __name__ == '__main__':
                 corpus_file.write(f'title{args.separator}paper\n')
 
                 if args.use_paper_info:
-                    pbar = tqdm(paper_info_df.iterrows(), total=len(paper_info_df), unit='paper')
+                    with tqdm(paper_info_df.iterrows(), total=len(paper_info_df), unit='paper') as pbar:
+                        for index, row in pbar:
+                            pbar.set_description(Path(row['pdf_url']).name[:50])
 
-                    for index, row in pbar:
-                        pbar.set_description(Path(row['pdf_url']).name[:50])
+                            try:
+                                text = extract_text(row['pdf_url'])
+                                title = row['title']
+                                corpus_file.write(
+                                    f'{title}{args.separator}{repr(text)}\n')
 
-                        try:
-                            text = extract_text(row['pdf_url'])
-                            title = row['title']
-                            corpus_file.write(
-                                f'{title}{args.separator}{repr(text)}\n')
-
-                        except:
-                            _logger.error(
-                                f'Error while extracting text of {Path(row["pdf_url"]).name}')
-                            error_file.write(
-                                f'Error while extracting text of {Path(row["pdf_url"]).name}\n')
+                            except:
+                                _logger.error(
+                                    f'Error while extracting text of {Path(row["pdf_url"]).name}')
+                                error_file.write(
+                                    f'Error while extracting text of {Path(row["pdf_url"]).name}\n')
 
                 else:
-                    pbar = tqdm(papers, total=len(papers), unit='paper')
+                    with tqdm(papers, total=len(papers), unit='paper') as pbar:
+                        for paper in pbar:
+                            pbar.set_description(Path(paper).name[:50])
 
-                    for paper in pbar:
-                        pbar.set_description(Path(paper).name[:50])
+                            try:
+                                text = extract_text(paper)
+                                title = extract_title(text, args.conference, args.year)
+                                corpus_file.write(
+                                    f'{title}{args.separator}{repr(text)}\n')
 
-                        try:
-                            text = extract_text(paper)
-                            title = extract_title(text, args.conference, args.year)
-                            corpus_file.write(
-                                f'{title}{args.separator}{repr(text)}\n')
-
-                        except:
-                            _logger.error(
-                                f'Error while extracting text of {Path(paper).name}')
-                            error_file.write(
-                                f'Error while extracting text of {Path(paper).name}\n')
+                            except:
+                                _logger.error(
+                                    f'Error while extracting text of {Path(paper).name}')
+                                error_file.write(
+                                    f'Error while extracting text of {Path(paper).name}\n')
