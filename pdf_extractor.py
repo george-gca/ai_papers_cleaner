@@ -44,8 +44,7 @@ def extract_title(page: str, conference: str, year: str) -> str:
     end = 0
     for i, line in enumerate(lines):
         clean_line = line.strip()
-        if begin == -1 and len(clean_line) > 0 and \
-           not conference in clean_line.lower() and not year in clean_line:
+        if begin == -1 and len(clean_line) > 0 and conference not in clean_line.lower() and year not in clean_line:
             begin = i
         elif begin != -1 and (len(clean_line) == 0 or len(clean_line) > 50):
             end = i
@@ -155,10 +154,8 @@ if __name__ == '__main__':
                                     f'{title}{args.separator}{repr(text)}\n')
 
                             except:
-                                _logger.error(
-                                    f'Error while extracting text of {Path(row["pdf_url"]).name}')
-                                error_file.write(
-                                    f'Error while extracting text of {Path(row["pdf_url"]).name}\n')
+                                _logger.exception(f'Error while extracting text of {Path(row["pdf_url"]).name}')
+                                error_file.write(f'Error while extracting text of {Path(row["pdf_url"]).name}\n')
 
                 else:
                     with tqdm(papers, total=len(papers), unit='paper') as pbar:
@@ -172,7 +169,5 @@ if __name__ == '__main__':
                                     f'{title}{args.separator}{repr(text)}\n')
 
                             except:
-                                _logger.error(
-                                    f'Error while extracting text of {Path(paper).name}')
-                                error_file.write(
-                                    f'Error while extracting text of {Path(paper).name}\n')
+                                _logger.exception(f'Error while extracting text of {Path(paper).name}')
+                                error_file.write(f'Error while extracting text of {Path(paper).name}\n')

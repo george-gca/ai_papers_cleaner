@@ -5,7 +5,7 @@ import re
 from ast import literal_eval
 from functools import lru_cache, partial
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Set, Union
+from typing import Callable
 
 # check if splitted word is one single word in english
 import enchant
@@ -231,35 +231,41 @@ class TextCleaner():
             f'artificial (intelligence|in- telligence), {num_colon_hyphen_par}, [\d]+',
             f'biometrics, {num_colon_hyphen_par}, [\d]+',
             'cambridge university press',
-            # in   annual meeting of the association for computational linguistics
-            # in   annual meeting of the association for computational linguistics and the   international joint conference on natural language processing
             f'computational linguistics, {num_colon_hyphen_par}',
             'cognitive science, [\d]+',
             'conference on neural information processing systems (neurips|nips) [\w]+ ([\w]+ )*(canada|usa)',
             'conference on neural information processing systems \((neurips|nips) [\d]+\), [\w\s]+, ([\w]+, )*[\w]+',
             'conference on neural information processing systems \(neurips [\d]+\)',
-            'copyright [\S]+ [\d]+, association for the advancement of (artificial|artifcial|artifi- cial) intelligence \(www.aaai.org\)',
+            'copyright [\S]+ [\d]+, association for the advancement of (artificial|artifcial|artifi- cial) ' \
+                'intelligence \(www.aaai.org\)',
             f'experimental economics {num_colon_hyphen_par}',
             'ijcv, [\w]+ [\d]+',
             f'in [\d]+ aaai [\w]+ symposium series, [\d]+',
-            # 'in advances in neural information processing systems',
-            f'in ({ordinal_num} )?annual meeting of the association for computational linguistics( and the ({ordinal_num} )?international joint conference on natural language processing)?',
-            '(in proc |ieee )?international (conference on|journal of) computer vision (and (pattern|pat- tern) recognition|workshops( iccv workshops)?)?',
+            f'in ({ordinal_num} )?annual meeting of the association for computational linguistics' \
+                f'( and the ({ordinal_num} )?international joint conference on natural language processing)?',
+            '(in proc |ieee )?international (conference on|journal of) computer vision (and (pattern|pat- tern) ' \
+                'recognition|workshops( iccv workshops)?)?',
             'in (proceedings of |proc. )?international conference on learning representation(s)?(, [\d]+)?',
-            'in (proceedings of )?the ieee conference on computer vision and pattern recognition(, pp. [\d\s\-\−\–]+, [\d]+| \(cvpr\))?',
-            f'in computer vision and (pattern|pat- tern) recognition, [\d]+. cvpr [\d]+. ieee conference on, {num_or_hyphen}. ieee',
+            'in (proceedings of )?the ieee conference on computer vision and pattern recognition' \
+                '(, pp. [\d\s\-\−\–]+, [\d]+| \(cvpr\))?',
+            f'in computer vision and (pattern|pat- tern) recognition, [\d]+. cvpr [\d]+. ' \
+                f'ieee conference on, {num_or_hyphen}. ieee',
             'in (proceedings of )?the ieee conference on computer vision and (pattern|pat- tern) recognition',
             f'in proceedings of the {ordinal_num} international conference on machine learning \(icml-[\d]+\)',
-            f'in proceedings of the {ordinal_num} international conference on machine learning[\s\-\−\–]volume [\d]+, pp. [\s\d\-\−\–]+. jmlr. org, [\d]+',
+            f'in proceedings of the {ordinal_num} international conference on machine learning' \
+                f'[\s\-\−\–]volume [\d]+, pp. [\s\d\-\−\–]+. jmlr. org, [\d]+',
             'in computer vision and (pattern|pat- tern) recognition \(cvpr\)',
             'in computer vision and (pattern|pat- tern) recognition cvpr',
             f'in advances in neural information processing systems(, pp. [\d\s\-\−\–]+, [\d]+|, {num_or_hyphen})?',
             'in the ieee international conference on computer vision \(iccv\)',
             '(in the [\d]+ )?conference of the north american chapter of the association for computational linguistics',
             f'in www, {num_or_hyphen}. acm',
-            f'in proceedings of the {ordinal_num} international conference on (artificial|artifcial|artifi- cial) intelligence, {num_or_hyphen}. aaai press',
-            f'in proceedings of the [\w]+ international conference on artificial intelligence and statistics, pp. {num_or_hyphen}, [\d]+',
-            'in (proceedings of |proc. )?international conference on machine learning((, volume [\d]+, pp. [\d\s\-\−\–]+)?, [\d]+)?',
+            f'in proceedings of the {ordinal_num} international conference on (artificial|artifcial|artifi- cial) ' \
+                f'intelligence, {num_or_hyphen}. aaai press',
+            f'in proceedings of the [\w]+ international conference on artificial intelligence and statistics, ' \
+                f'pp. {num_or_hyphen}, [\d]+',
+            'in (proceedings of |proc. )?international conference on machine learning' \
+                '((, volume [\d]+, pp. [\d\s\-\−\–]+)?, [\d]+)?',
             'in international joint conferences on (artificial|artifcial|artifi- cial) intelligence',
             f'ieee transactions on [\w\s\-\−\–]*{num_colon_hyphen_par}',
             'in proceedings alt, [\d]+',
@@ -271,29 +277,38 @@ class TextCleaner():
             f'nature, {num_colon_hyphen_par}, [\d]+',
             'pattern analysis and machine intelligence',
             'proc siggraph',
-            f'proceedings of the {ordinal_num} international conference on computational linguistics, page(s)? {num_or_hyphen} [\w\s,]+( \(online\),)? [\w]+ {num_or_hyphen}, [\d]+',
+            f'proceedings of the {ordinal_num} international conference on computational linguistics, page(s)? '
+                f'{num_or_hyphen} [\w\s,]+( \(online\),)? [\w]+ {num_or_hyphen}, [\d]+',
             '(cam- bridge |cambridge )?university press(,)? [\d]+(.|,)',
             'workshop track',
             '(in|proceedings of the) [\w\d\s\-.]+, page(s)? [\d]+(-[\d]+)?([\w\s\-,]+)?',
             f'international conference [\w\s\-\−\–]+, pp. [\d\s\-\−\–]+. [\w]+, [\d]+',
             #   international conference on intelligent robots and systems, pp. 5026-5033. ieee, 2012.
             # 'pages [\d]+-[\d]+',
-            # f'proceedings of the [\d]+[\s]*(st|nd|rd|th) international conference on [\w\s,\-\−\–]+ pmlr ([\d,\s]+.)? copyright ([\d]+ )?by the (author|au- thor)\(s\)',
-            f'proceedings of the {ordinal_num} workshop [\w\s\-\−\–\(\)]+, page(s)? {num_or_hyphen} [\w\s]+, [\w\s]+( \(online\))?, [\w]+ [\d]+, [\d]+',
+            f'proceedings of the {ordinal_num} workshop [\w\s\-\−\–\(\)]+, page(s)? {num_or_hyphen} [\w\s]+, [\w\s]+' \
+                f'( \(online\))?, [\w]+ [\d]+, [\d]+',
             '(©)?[\d]+ association for computational linguistics( [\d]+)?',
-            f'proceedings of the {ordinal_num} international conference on [\w\s,\-\−\–]+ pmlr ([\d,\s]+.)? copyright ([\d]+ )?by the author\(s\)',
-            'proceedings of the (st|nd|rd|th) international conference on machine learning online pmlr copyright by the author',
+            f'proceedings of the {ordinal_num} international conference on [\w\s,\-\−\–]+ pmlr ([\d,\s]+.)? ' \
+                f'copyright ([\d]+ )?by the author\(s\)',
+            'proceedings of the (st|nd|rd|th) international conference on machine learning online pmlr ' \
+                'copyright by the author',
             f'proceedings of the {ordinal_num} international conference on machine learning \(icml [\d]+\), [\d]+',
-            '(proceedings of the|in) [\w]+(-[\w]+)? aaai conference on (artificial|artifcial|artifi- cial) intelligence(, [\d]+| \(aaai-[\d]+\))?',
+            '(proceedings of the|in) [\w]+(-[\w]+)? aaai conference on (artificial|artifcial|artifi- cial) ' \
+                'intelligence(, [\d]+| \(aaai-[\d]+\))?',
             f'{prefix_proceedings}{prefix_paper_type}{pages_and_location}{dates_year}{suffix_acl}',
             'c[\d]+ association for computational linguistics',
-            f'findings of the association for computational linguistics: emnlp [\d]+, page(s)? {num_or_hyphen}(,|.)? [\w]+ [\d\-\−\–\s]+(,|.) [\d]+',
-            f'(in )?(advances in neural information processing|findings of|proceedings of|{ordinal_num}? (international )?conference (on|in)) [\d\w\s\(\)#&\-\−\–:,.]+ page(s)? {num_or_hyphen}(,|.)( [\d]+)?',
+            f'findings of the association for computational linguistics: emnlp [\d]+, page(s)? {num_or_hyphen}(,|.)? ' \
+                f'[\w]+ [\d\-\−\–\s]+(,|.) [\d]+',
+            f'(in )?(advances in neural information processing|findings of|proceedings of|{ordinal_num}? ' \
+                f'(international )?conference (on|in)) [\d\w\s\(\)#&\-\−\–:,.]+ page(s)? {num_or_hyphen}(,|.)( [\d]+)?',
             '[\w]+, [\w]+, [\w]+ [\d]+ - [\w]+ [\d]+, [\d]+. [\w\d]+ association for computational linguistics',
-            f'[\w]+, [\w]+( \(online\))?, [\w]+ {num_or_hyphen}, [\d]+. (©)?[\d]+ association for computational linguistics proceedings of the {ordinal_num}[\w\s]+, page(s)? {num_or_hyphen}',
-            '[\w]*proceedings of the [\w\-]+ international joint conference on (artificial|artifcial|artifi- cial) intelligence \([\d\w\-]+\)',
+            f'[\w]+, [\w]+( \(online\))?, [\w]+ {num_or_hyphen}, [\d]+. (©)?[\d]+ association for computational ' \
+                f'linguistics proceedings of the {ordinal_num}[\w\s]+, page(s)? {num_or_hyphen}',
+            '[\w]*proceedings of the [\w\-]+ international joint conference on (artificial|artifcial|artifi- cial) ' \
+                'intelligence \([\d\w\-]+\)',
             'published as a conference paper at [\w]+( [\d]+)?',
-            f'proceedings of the {ordinal_num} international conference on machine learning, [\w]+( [\w]+)*, ([\w]+(, [\w]+)*)*[,.]? pmlr [\d]+, [\d]+. [\w\-]+( [\d]+)? by the author(\(s\))?',
+            f'proceedings of the {ordinal_num} international conference on machine learning, [\w]+( [\w]+)*, ' \
+                '([\w]+(, [\w]+)*)*[,.]? pmlr [\d]+, [\d]+. [\w\-]+( [\d]+)? by the author(\(s\))?',
             'published as a conference paper at [\w]+( [\d]+)',
             f'[\w]+ state university {num_colon_hyphen_par}',
             'springer science & business media(, [\d]+)?',
@@ -305,13 +320,16 @@ class TextCleaner():
         ]
 
         self._phrases_to_remove = [
-            '(ablation stud(y|ies) )?we (also )?conduct(ed)? ablation stud(y|ies)( to)( demonstrate the (\w)+ of (our|the)( proposed)?( implementation| method| solution)?)?',
+            '(ablation stud(y|ies) )?we (also )?conduct(ed)? ablation stud(y|ies)( to)( demonstrate the (\w)+ of ' \
+                '(our|the)( proposed)?( implementation| method| solution)?)?',
             'ablation stud(y|ies)',
             '(ap(\w|[\d]+)? )+',
-            '(these |both the |all the |the first [\w]+ |first [\w]+ |the )?(authors )?contribute(d)? equally( to this work)?',
+            '(these |both the |all the |the first [\w]+ |first [\w]+ |the )?(authors )?contribute(d)? equally' \
+                '( to this work)?',
             'in fact',
             'corresponding author',
-            f'(in {item_citation} [\d]+ )?((we )|(it ))?(also |now )?show(s|n)? (in {item_citation} [\d]+ )?(that|(the )?result(s)?)',
+            f'(in {item_citation} [\d]+ )?((we )|(it ))?(also |now )?show(s|n)? (in {item_citation} [\d]+ )?'
+                f'(that|(the )?result(s)?)',
             '(we have |has )?show(n)? that',
             f'(it is )?(show(n)? )?(in )?this {item_citation}( that)?',
             'even though',
@@ -328,20 +346,27 @@ class TextCleaner():
             'supplementary material[s]?',
             'all rights reserved(.|,)?',
             'best viewed in color',
-            'this work is (licensed|licenced) under a creative commons attribution [\d.]+ international (license|licence). (license|licence) details',
+            'this work is (licensed|licenced) under a creative commons attribution [\d.]+ international ' \
+                '(license|licence). (license|licence) details',
             '(part of the )?(work|research) done during (an )?internship at',
             '(the |this |these )?(experiment|result)[s]? (show(n|s|ing)?|prove(s)?)( that)?',
             '(in )?the [\w]+ (row|column)(s)?( we)?( show(s)?)?( that| the)?',
             '(in )?each (row|column)(s)?(we show( that| the)?)?',
             # '(in )?(the )?([\w]+|each) ([\w]+ )?(row|column)(s)?( show(s)?)?( that| the)?',
-            '(the |this )?(work|research|paper) (is|was) (partially )?(done|funded by|supported( in part(s)?)? by) ([\w\s\d\-\_,]+ \(((, | and )?no. [\d\w\-\s]+)+\))+.',
-            '(the |this )?(work|research|paper) (is|was) (partially )?(done|funded by|supported( in part(s)?)? by) [\w\s\d\-\_]+(no|and no)+ ([\w\d\-\_]+)*',
-            '(the |this )?(work|research|paper) (is|was) (partially )?(done|funded by|supported( in part(s)?)? by) [\w\s\d\-\_]+\((grant no(.)? [\d]+| and |, and |no(.)? [\d]+)+\)',
-            '(the |this )?(work|research|paper) (is|was) (partially )?(done|funded by|supported( in part(s)?)? by) [\d\s\w\-\_]+ of china',
+            '(the |this )?(work|research|paper) (is|was) (partially )?(done|funded by|supported( in part(s)?)? by) ' \
+                '([\w\s\d\-\_,]+ \(((, | and )?no. [\d\w\-\s]+)+\))+.',
+            '(the |this )?(work|research|paper) (is|was) (partially )?(done|funded by|supported( in part(s)?)? by) ' \
+                '[\w\s\d\-\_]+(no|and no)+ ([\w\d\-\_]+)*',
+            '(the |this )?(work|research|paper) (is|was) (partially )?(done|funded by|supported( in part(s)?)? by) ' \
+                '[\w\s\d\-\_]+\((grant no(.)? [\d]+| and |, and |no(.)? [\d]+)+\)',
+            '(the |this )?(work|research|paper) (is|was) (partially )?(done|funded by|supported( in part(s)?)? by) ' \
+                '[\d\s\w\-\_]+ of china',
             '(the |this )?(work|research|paper) (is|was) (partially )?(done|funded by|supported( in part(s)?)? by)',
             'joint research project with youtu lab of tencent',
             '((the )?code )?(is |will be )?available at',
-            'this [\w\d]+ paper is the open access version provided by [\w\s\d\-_]+ except for this watermark it is identical to the accepted version the final published version of the proceedings is available on ieee xplore',
+            'this [\w\d]+ paper is the open access version provided by [\w\s\d\-_]+ except for this watermark it is ' \
+                'identical to the accepted version the final published version of the proceedings is available on ' \
+                'ieee xplore',
         ]
 
         self._remaining_two_chars = [
@@ -392,7 +417,9 @@ class TextCleaner():
         self._regexes = {}
 
         # aglutinate_urls
-        regex = '\\b[0-9]?(ht|f)tp[s]?:[\\s/]+[\w.\-\−\–]+(-[\\s]+)?(.[\\s]+)?(?![0-9]?((ht|f)tp[s]?|. ))[\w:/?.&=#\-\−\–\~\˜\+]+([\-\−\–_:/][\\s]+(?![0-9]?((ht|f)tp[s]?|. ))[\w:/?.&=#\-\−\–\~\˜\+]+)*[\\s]*[,.\)/]'
+        regex = '\\b[0-9]?(ht|f)tp[s]?:[\\s/]+[\w.\-\−\–]+(-[\\s]+)?(.[\\s]+)?(?![0-9]?((ht|f)tp[s]?|. ))' \
+                '[\w:/?.&=#\-\−\–\~\˜\+]+([\-\−\–_:/][\\s]+(?![0-9]?((ht|f)tp[s]?|. ))' \
+                '[\w:/?.&=#\-\−\–\~\˜\+]+)*[\\s]*[,.\)/]'
         regex += '((htm|html|mp4|py|zip|php)\\b)?'  # possible extensions
         self._regexes['aglutinate_urls'] = re.compile(regex)
 
@@ -552,7 +579,14 @@ class TextCleaner():
         regex = '([\w]+)-([\w]+)'
         self._regexes['replace_hyphens_by_underline'] = re.compile(regex)
 
-    def _pretty_print(self, regex: Union[str, re.Pattern], text: str, color: int = BG_HIGHLIGHT_COLOR, border_line_limit: int = LINE_LIMIT, flags: re.RegexFlag=0) -> None:
+    def _pretty_print(
+            self,
+            regex: str | re.Pattern,
+            text: str,
+            color: int = BG_HIGHLIGHT_COLOR,
+            border_line_limit: int = LINE_LIMIT,
+            flags: re.RegexFlag=0,
+            ) -> None:
         new_text = ''
         previous_start = 0
 
@@ -581,7 +615,7 @@ class TextCleaner():
             self._logger.debug('Text kept the same')
 
     def _highlight_not_recognized_words(self, text: str, spell_checker: enchant.Dict = enchant.Dict("en_US"),
-                                        extra_lemmas_dict: Dict[str, str] = {}, color: int = Back.BLUE) -> str:
+                                        extra_lemmas_dict: dict[str, str] = {}, color: int = Back.BLUE) -> str:
         def _recognized(word: str) -> bool:
             if len(word) > 0 and spell_checker.check(word) or word in self._new_words or word in extra_lemmas_dict.values():
                 return True
@@ -602,7 +636,7 @@ class TextCleaner():
             w) or w in new_words else f'{color}{w}{Back.RESET}' for w in text_split]
         return ' '.join(text)
 
-    def _run_regex(self, text: str, regexes: Union[str, List[str], re.Pattern],
+    def _run_regex(self, text: str, regexes: str | list[str] | re.Pattern,
                    replacement: str = ' ', flags: re.RegexFlag=0) -> str:
         if isinstance(regexes, list):
             regexes = '|'.join(regexes)
@@ -660,7 +694,12 @@ class TextCleaner():
 
         return text
 
-    def aglutinate_words(self, text: str, spell_checker: enchant.Dict = enchant.Dict("en_US"), min_occurrences: int = 5) -> str:
+    def aglutinate_words(
+            self,
+            text: str,
+            spell_checker: enchant.Dict = enchant.Dict("en_US"),
+            min_occurrences: int = 5,
+            ) -> str:
         self._logger.debug(
             f'\n{Fore.GREEN}###########################{Fore.RESET}\n\nAglutinating words separated by "-":')
 
@@ -683,13 +722,14 @@ class TextCleaner():
                     self._logger.debug(f'{Fore.RED}{original_word}{Fore.RESET} -> {Fore.GREEN}{word}{Fore.RESET}')
                     text = re.sub(original_word, word, text)
                 elif re.search(word, text) != None and len(re.findall(word, text)) > min_occurrences:
-                    self._logger.debug(f'{Fore.RED}{original_word}{Fore.RESET} -> {Fore.GREEN}{word}{Fore.RESET} (happens more than {min_occurrences}x)')
+                    self._logger.debug(f'{Fore.RED}{original_word}{Fore.RESET} -> {Fore.GREEN}{word}{Fore.RESET}'
+                                       f' (happens more than {min_occurrences}x)')
                     self._new_words.add(word)
                     text = re.sub(original_word, word, text)
                 else:
                     hyphen_word = re.sub(regex, '\\1_\\2', original_word)
                     self._logger.debug(f'Keep {Fore.GREEN}{hyphen_word}{Fore.RESET}')
-                    
+
                     if hyphen_word != original_word:
                         text = re.sub(original_word, hyphen_word, text)
 
@@ -707,7 +747,13 @@ class TextCleaner():
 
         return text
 
-    def aglutinate_word_sequences(self, text: str, spell_checker: enchant.Dict = enchant.Dict("en_US"), max_ngram: int = 2, min_occurrences: int = 5) -> str:
+    def aglutinate_word_sequences(
+            self,
+            text: str,
+            spell_checker: enchant.Dict = enchant.Dict("en_US"),
+            max_ngram: int = 2,
+            min_occurrences: int = 5,
+            ) -> str:
         self._logger.debug(
             f'\n{Fore.GREEN}###########################{Fore.RESET}\n\nAglutinating words separated by " ":')
 
@@ -722,7 +768,8 @@ class TextCleaner():
             self._logger.debug(f'Replacing {n}-grams')
             i = n
             while i < len(words):
-                # only agglutinate if at least one of the words has more than 2 chars, none starts or ends with - and the first one is not in
+                # only agglutinate if at least one of the words has more than 2 chars, none starts or
+                # ends with - and the first one is not in
                 # since it could alter the meaning of the sentence (e.g.: in different - indifferent)
                 if any((len(w) > 2 for w in words[i-n:i])) and \
                     not any((w.startswith('-') or w.endswith('-') for w in words[i-n:i])) and \
@@ -746,7 +793,8 @@ class TextCleaner():
                         elif re.search(ngram, text) != None and len(re.findall(ngram, text)) > min_occurrences:
                             if self._debug:
                                 ngram_orig = ' '.join(words[i-n:i])
-                                self._logger.debug(f'{Fore.RED}{ngram_orig}{Fore.RESET} -> {Fore.GREEN}{ngram}{Fore.RESET} (happens more than {min_occurrences}x)')
+                                self._logger.debug(f'{Fore.RED}{ngram_orig}{Fore.RESET} -> {Fore.GREEN}{ngram}{Fore.RESET}'
+                                                   f' (happens more than {min_occurrences}x)')
 
                             self._new_words.add(ngram)
                             words[i-n] = ngram
@@ -770,7 +818,7 @@ class TextCleaner():
     def plural_to_singular(self, text: str,
                            lemmatizer: Callable[[
                                str], str] = _grammar.singular_noun,
-                           extra_lemmas_dict: Dict[str, str] = {}) -> str:
+                           extra_lemmas_dict: dict[str, str] = {}) -> str:
         self._logger.debug(
             f'\n{Fore.GREEN}###########################{Fore.RESET}\n\nConverting from plural to singular:')
 
@@ -788,8 +836,8 @@ class TextCleaner():
         words_in_singular = [w if not isinstance(w, bool) else tokens[i] for i, w in enumerate(words_in_singular)]
 
         if self._debug:
-            coloured_tokens = [
-                w if (lemmatizer(w) == False) and (w not in extra_lemmas_dict) else BG_HIGHLIGHT_COLOR + w + Back.RESET for w in tokens]
+            coloured_tokens = [w if (lemmatizer(w) == False) and (w not in extra_lemmas_dict) \
+                               else BG_HIGHLIGHT_COLOR + w + Back.RESET for w in tokens]
             self._logger.debug(' '.join(coloured_tokens))
 
         return ' '.join(words_in_singular)
@@ -866,7 +914,7 @@ class TextCleaner():
 
         return self.remove_text_between_positions(text, start, end)
 
-    def remove_bib_info(self, text: str, phrases: Optional[List[str]] = None) -> str:
+    def remove_bib_info(self, text: str, phrases: None | list[str] = None) -> str:
         self._logger.debug(
             f'\n{Fore.GREEN}###########################{Fore.RESET}\n\nRemoving bib info:')
 
@@ -889,7 +937,7 @@ class TextCleaner():
         regex = self._regexes['remove_cid']
         return self._run_regex(text, regex, '')
 
-    def remove_composite_words(self, text: str, composite_words: Optional[List[str]] = None) -> str:
+    def remove_composite_words(self, text: str, composite_words: None | list[str] = None) -> str:
         self._logger.debug(
             f'\n{Fore.GREEN}###########################{Fore.RESET}\n\nRemoving composite words:')
 
@@ -938,7 +986,7 @@ class TextCleaner():
             self._logger.debug('Text kept the same')
             return text
 
-    def remove_footnotes_numbers(self, text: str, words_with_footnotes: Optional[List[str]] = None) -> str:
+    def remove_footnotes_numbers(self, text: str, words_with_footnotes: None | list[str] = None) -> str:
         self._logger.debug(
             f'\n{Fore.GREEN}###########################{Fore.RESET}\n\nRemoving footnotes from words:')
 
@@ -977,7 +1025,8 @@ class TextCleaner():
 
     def remove_item_citation(self, text: str) -> str:
         self._logger.debug(
-            f'\n{Fore.GREEN}###########################{Fore.RESET}\n\nRemoving papers, figures, tables, sections, and theorems citations:')
+            f'\n{Fore.GREEN}###########################{Fore.RESET}\n\nRemoving papers, figures, tables, '
+            f'sections, and theorems citations:')
         regex = self._regexes['remove_item_citation']
         return self._run_regex(text, regex, ' ')
 
@@ -1018,7 +1067,7 @@ class TextCleaner():
         regex = self._regexes['remove_latexit_tags']
         return self._run_regex(text, regex, ' ')
 
-    def remove_metrics(self, text: str, metrics: Optional[List[str]] = None) -> str:
+    def remove_metrics(self, text: str, metrics: None | list[str] = None) -> str:
         self._logger.debug(
             f'\n{Fore.GREEN}###########################{Fore.RESET}\n\nRemoving metrics numbers:')
 
@@ -1050,7 +1099,7 @@ class TextCleaner():
         regex = self._regexes['remove_ordinal_numbers']
         return self._run_regex(text, regex, ' ')
 
-    def remove_phrases(self, text: str, phrases: Optional[List[str]] = None) -> str:
+    def remove_phrases(self, text: str, phrases: None | list[str] = None) -> str:
         self._logger.debug(
             f'\n{Fore.GREEN}###########################{Fore.RESET}\n\nRemoving phrases:')
 
@@ -1066,7 +1115,7 @@ class TextCleaner():
 
         return self._run_regex(text, regex, ' ')
 
-    def remove_remaining_two_chars(self, text: str, two_chars: Optional[List[str]] = None) -> str:
+    def remove_remaining_two_chars(self, text: str, two_chars: None | list[str] = None) -> str:
         self._logger.debug(
             f'\n{Fore.GREEN}###########################{Fore.RESET}\n\nRemoving remaining two chars:')
 
@@ -1088,7 +1137,8 @@ class TextCleaner():
             if self._debug:
                 splitted_text_debug = splitted_text[0:step]
                 splitted_text_debug += [splitted_text[i] if splitted_text[i] != splitted_text[i-step]
-                                        else f'{BG_HIGHLIGHT_COLOR}{splitted_text[i]}{Back.RESET}' for i in range(step, len(splitted_text))]
+                                        else f'{BG_HIGHLIGHT_COLOR}{splitted_text[i]}{Back.RESET}'
+                                        for i in range(step, len(splitted_text))]
                 self._logger.debug(' '.join(splitted_text_debug))
 
             new_splitted_text = splitted_text[0:step]
@@ -1108,11 +1158,12 @@ class TextCleaner():
 
     def remove_specific_expressions(self, text: str) -> str:
         self._logger.debug(
-            f'\n{Fore.GREEN}###########################{Fore.RESET}\n\nRemoving some specific expressions (arxiv and pages):')
+            f'\n{Fore.GREEN}###########################{Fore.RESET}\n\nRemoving some specific '
+            f'expressions (arxiv and pages):')
         regex = self._regexes['remove_specific_expressions']
         return self._run_regex(text, regex, ' ')
 
-    def remove_stopwords(self, text: str, stopwords: Set[str] = set()) -> str:
+    def remove_stopwords(self, text: str, stopwords: set[str] = set()) -> str:
         self._logger.debug(
             f'\n{Fore.GREEN}###########################{Fore.RESET}\n\nRemoving stop words and one character symbols:')
         tokens = word_tokenize(text)
@@ -1128,7 +1179,8 @@ class TextCleaner():
 
     def remove_symbols(self, text: str) -> str:
         self._logger.debug(
-            f'\n{Fore.GREEN}###########################{Fore.RESET}\n\nRemoving symbols, remaining one character symbols, and trailing spaces:')
+            f'\n{Fore.GREEN}###########################{Fore.RESET}\n\nRemoving symbols, remaining one character '
+            f'symbols, and trailing spaces:')
         regex = self._regexes['remove_symbols']
         return self._run_regex(text, regex, ' ').strip()
 
@@ -1148,7 +1200,8 @@ class TextCleaner():
         if self._debug:
             if len(text) < 10000:
                 self._logger.debug(
-                    f'{text[:from_position]}{BG_HIGHLIGHT_COLOR + text[from_position:to_position] + Back.RESET}{text[to_position:]}')
+                    f'{text[:from_position]}{BG_HIGHLIGHT_COLOR + text[from_position:to_position] + Back.RESET}'
+                    f'{text[to_position:]}')
             else:
                 if len(text[:from_position]) < 3000:
                     text_before = text[:from_position]
@@ -1202,7 +1255,7 @@ class TextCleaner():
         regex = self._regexes['remove_urls']
         return self._run_regex(text, regex, ' ')
 
-    def remove_word_by_prefix(self, text: str, prefixes: List[str]) -> str:
+    def remove_word_by_prefix(self, text: str, prefixes: list[str]) -> str:
         regexes = [f'{pref}[\w.\-\−\–\/]*[\s.,\d\)]?' for pref in prefixes]
         regex = '|'.join(regexes)
         return self._run_regex(text, re.compile(regex), ' ')
@@ -1222,10 +1275,11 @@ class TextCleaner():
 
         return result
 
-    def replace_symbol_by_letters(self, text: str, symbols_dict: Dict[str, str] = {}) -> str:
+    def replace_symbol_by_letters(self, text: str, symbols_dict: dict[str, str] = {}) -> str:
         symbols_dict.update(self._symbols_dict)
         self._logger.debug(
-            f'\n{Fore.GREEN}###########################{Fore.RESET}\n\nReplacing {symbols_dict.keys()} symbols by {symbols_dict.values()}:')
+            f'\n{Fore.GREEN}###########################{Fore.RESET}\n\nReplacing {symbols_dict.keys()} symbols '
+            f'by {symbols_dict.values()}:')
         if self._debug:
             regex = ''.join(symbols_dict.keys())
             regex = f'[{regex}]'
@@ -1704,7 +1758,8 @@ def _clean_paper(paper: pd.Series, stop_when='') -> None:
 
     _logger.info(f'\n{Fore.GREEN}###########################{Fore.RESET}\n\nTitle: \n{title}')
     _logger.info(
-        f'\n{Fore.GREEN}###########################{Fore.RESET}\n\nFinal text (words not recognized in blue):\n{text_cleaner._highlight_not_recognized_words(text)}')
+        f'\n{Fore.GREEN}###########################{Fore.RESET}\n\nFinal text (words not recognized in blue)'
+        f':\n{text_cleaner._highlight_not_recognized_words(text)}')
 
     # _logger.info(f'lemmatizer cache info: {lemmatizer.cache_info()}')
 
@@ -2105,11 +2160,13 @@ if __name__ == '__main__':
 
         else:
             if args.n_processes == 1 or len(df) < args.n_processes * min_papers_per_process:
-                _logger.info(f'n_papers ({len(df)}) < n_processes * {min_papers_per_process} ({args.n_processes} * {min_papers_per_process} = {args.n_processes * min_papers_per_process})')
+                _logger.info(f'n_papers ({len(df)}) < n_processes * {min_papers_per_process} ({args.n_processes} * '
+                             f'{min_papers_per_process} = {args.n_processes * min_papers_per_process})')
                 _logger.info(f'Running in a single process')
                 new_df = _clean_papers(df, show_progress=True)
             else:
-                _logger.info(f'n_papers ({len(df)}) >= n_processes * {min_papers_per_process} ({args.n_processes} * {min_papers_per_process} = {args.n_processes * min_papers_per_process})')
+                _logger.info(f'n_papers ({len(df)}) >= n_processes * {min_papers_per_process} ({args.n_processes} * '
+                             f'{min_papers_per_process} = {args.n_processes * min_papers_per_process})')
                 _logger.info(f'Parallelizing to {args.n_processes} processes')
                 new_df = parallelize_dataframe(
                     df, _clean_papers, args.n_processes)

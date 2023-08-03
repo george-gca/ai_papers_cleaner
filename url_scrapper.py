@@ -6,7 +6,6 @@ from ast import literal_eval
 from pathlib import Path
 
 import pandas as pd
-from colorama import Back
 
 from text_cleaner import TextCleaner
 from utils import parallelize_dataframe, setup_log

@@ -6,7 +6,6 @@ import json
 import re
 from difflib import SequenceMatcher
 from multiprocessing import cpu_count
-from typing import Dict, Set, Union
 
 import pandas as pd
 from tqdm import tqdm
@@ -19,12 +18,12 @@ from utils import parallelize_dataframe, setup_log
 _logger = logging.getLogger(__name__)
 
 
-def _add_clean_title(d: Dict[str, Union[str, bool]], text_cleaner: TextCleaner) -> Dict[str, Union[str, bool]]:
+def _add_clean_title(d: dict[str, str | bool], text_cleaner: TextCleaner) -> dict[str, str | bool]:
     d['clean_title'] = _clean_title(d['title'], text_cleaner)
     return d
 
 
-def _clean_abstract(d: Dict[str, Union[str, bool]]) -> Dict[str, Union[str, bool]]:
+def _clean_abstract(d: dict[str, str | bool]) -> dict[str, str | bool]:
     text = [t for t in ftfy.fix_text(d['abstract']).split('\n') if len(t.strip()) > 0]
     text = ' '.join(text).strip()
     text = [t for t in text.split() if len(t.strip()) > 0]
@@ -32,7 +31,7 @@ def _clean_abstract(d: Dict[str, Union[str, bool]]) -> Dict[str, Union[str, bool
     return d
 
 
-def _convert_abstract_to_repr(d: Dict[str, Union[str, bool]]) -> Dict[str, Union[str, bool]]:
+def _convert_abstract_to_repr(d: dict[str, str | bool]) -> dict[str, str | bool]:
     d['abstract'] = repr(d['abstract'])
     return d
 
@@ -56,18 +55,18 @@ def _clean_title(title: str, text_cleaner: TextCleaner) -> str:
     return clean_title
 
 
-def _discard_keys(d: Dict[str, Union[str, bool]], keys_to_keep: Set[str]) -> Dict[str, Union[str, bool]]:
+def _discard_keys(d: dict[str, str | bool], keys_to_keep: set[str]) -> dict[str, str | bool]:
     paper = {k: v for k, v in d.items() if k in keys_to_keep}
     return paper
 
 
-def _merge_dicts(d1: Dict[str, Union[str, bool]], d2: Dict[str, Union[str, bool]]) -> Dict[str, Union[str, bool]]:
+def _merge_dicts(d1: dict[str, str | bool], d2: dict[str, str | bool]) -> dict[str, str | bool]:
     if d1['paper_url'] in d2:
         d1 = {**d1, **d2[d1['paper_url']]}
     return d1
 
 
-def _rename_keys(d: Dict[str, Union[str, bool]], regex: re.Pattern) -> Dict[str, Union[str, bool]]:
+def _rename_keys(d: dict[str, str | bool], regex: re.Pattern) -> dict[str, str | bool]:
     abs_url = d['url_abs'].lower()
     if d['arxiv_id'] is not None and len(d['arxiv_id']) > 0:
         arxiv_id = d['arxiv_id']
@@ -210,7 +209,9 @@ if __name__ == '__main__':
     # merge info from papers with code
     # discarding papers with title longer than 230 characters and without year
     papers_codes = {d['paper_url']: d for d in papers_codes}
-    papers_abstracts = [_merge_dicts(d, papers_codes) for d in papers_abstracts if d['title'] and 0 < len(d['title']) < 230 and len(d['date']) > 0]
+    papers_abstracts = [_merge_dicts(d, papers_codes) \
+                        for d in papers_abstracts \
+                            if d['title'] and 0 < len(d['title']) < 230 and len(d['date']) > 0]
     _logger.info(f'After merging, {len(papers_abstracts):n} papers remain from papers with code')
 
     # check if this paper is not already in the abstracts df
@@ -219,10 +220,13 @@ if __name__ == '__main__':
     df_urls = _clean_titles(df_urls, progress=True)
 
     text_cleaner = TextCleaner()
-    papers = {_clean_title(d['title'], text_cleaner): d for d in tqdm(papers_abstracts, unit='paper', ncols=250, desc='Cleaning PWC titles') if d['title'] is not None and d['abstract'] is not None}
+    papers = {_clean_title(d['title'], text_cleaner): d \
+              for d in tqdm(papers_abstracts, unit='paper', ncols=250, desc='Cleaning PWC titles') \
+                if d['title'] is not None and d['abstract'] is not None}
 
     # if it is, just add the new url to the urls dataframe
-    # df_urls[df_urls.clean_title.isin(papers)] = df_urls[df_urls.clean_title.isin(papers)].apply(_add_urls, papers_urls=papers, axis=1)
+    # df_urls[df_urls.clean_title.isin(papers)] = \
+    #     df_urls[df_urls.clean_title.isin(papers)].apply(_add_urls, papers_urls=papers, axis=1)
 
     # if not, add it to all dataframes
     papers_already_in = {s for s in df[df.clean_title.isin(papers)].clean_title}
@@ -240,7 +244,8 @@ if __name__ == '__main__':
                 for _, t in df.title[abs(df.title.str.len() - len(v['title'])) < 5].items():
                     seq_matcher.set_seq1(t)
 
-                    if seq_matcher.real_quick_ratio() > 0.95 and seq_matcher.quick_ratio() > 0.95:  # and seq_matcher.ratio() > 0.95:
+                    if seq_matcher.real_quick_ratio() > 0.95 and seq_matcher.quick_ratio() > 0.95:
+                        # could also add: and seq_matcher.ratio() > 0.95:
                         similar_titles.add(k)
                         break
 
@@ -262,7 +267,8 @@ if __name__ == '__main__':
             for _, t in df.title[abs(df.title.str.len() - len(v['title'])) < 5].iteritems():
                 seq_matcher.set_seq1(t)
 
-                if seq_matcher.real_quick_ratio() > 0.95 and seq_matcher.quick_ratio() > 0.95:  # and seq_matcher.ratio() > 0.95:
+                if seq_matcher.real_quick_ratio() > 0.95 and seq_matcher.quick_ratio() > 0.95:
+                    # could also add: and seq_matcher.ratio() > 0.95:
                     similar_titles.add(k)
                     tqdm.write(f'{t}\n{v["title"]}\n')
                     break
@@ -276,7 +282,7 @@ if __name__ == '__main__':
     # rename dicts' keys, filter by years and clean
     acl_conference_regex = re.compile(r'[\d]+.([\w]+)-[\d\w.]+')
     papers_not_in = [_rename_keys(d, acl_conference_regex) for d in papers_not_in]
-    papers_not_in = [d for d in papers_not_in if d['year'] >= 2017 and not 'openreview.net' in d['abstract_url']]
+    papers_not_in = [d for d in papers_not_in if d['year'] >= 2017 and 'openreview.net' not in d['abstract_url']]
     papers_not_in = [_clean_abstract(d) for d in papers_not_in]
     papers_not_in = [_add_clean_title(d, text_cleaner) for d in papers_not_in]
 
