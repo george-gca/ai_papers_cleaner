@@ -153,7 +153,7 @@ if __name__ == '__main__':
                                 corpus_file.write(
                                     f'{title}{args.separator}{repr(text)}\n')
 
-                            except:
+                            except Exception:
                                 _logger.exception(f'Error while extracting text of {Path(row["pdf_url"]).name}')
                                 error_file.write(f'Error while extracting text of {Path(row["pdf_url"]).name}\n')
 
@@ -168,6 +168,6 @@ if __name__ == '__main__':
                                 corpus_file.write(
                                     f'{title}{args.separator}{repr(text)}\n')
 
-                            except:
+                            except Exception:
                                 _logger.exception(f'Error while extracting text of {Path(paper).name}')
                                 error_file.write(f'Error while extracting text of {Path(paper).name}\n')
