@@ -660,7 +660,7 @@ class TextCleaner():
         match = regex.search(text)
         previous_index = 0
 
-        while match != None:
+        while match is not None:
             start, end = match.span()
             word = text[previous_index +
                         start:previous_index+end]
@@ -713,7 +713,7 @@ class TextCleaner():
         match = regex.search(text)
         previous_index = 0
 
-        while match != None:
+        while match is not None:
             original_word = text[previous_index +
                                  match.start():previous_index+match.end()]
             word = re.sub(regex, '\\1\\2', original_word)
@@ -721,7 +721,7 @@ class TextCleaner():
                 if spell_checker.check(word) or word in self._new_words:
                     self._logger.debug(f'{Fore.RED}{original_word}{Fore.RESET} -> {Fore.GREEN}{word}{Fore.RESET}')
                     text = re.sub(original_word, word, text)
-                elif re.search(word, text) != None and len(re.findall(word, text)) > min_occurrences:
+                elif re.search(word, text) is not None and len(re.findall(word, text)) > min_occurrences:
                     self._logger.debug(f'{Fore.RED}{original_word}{Fore.RESET} -> {Fore.GREEN}{word}{Fore.RESET}'
                                        f' (happens more than {min_occurrences}x)')
                     self._new_words.add(word)
@@ -790,7 +790,7 @@ class TextCleaner():
                                 j -= 1
 
                         # only consider if the ngram happens at least X times
-                        elif re.search(ngram, text) != None and len(re.findall(ngram, text)) > min_occurrences:
+                        elif re.search(ngram, text) is not None and len(re.findall(ngram, text)) > min_occurrences:
                             if self._debug:
                                 ngram_orig = ' '.join(words[i-n:i])
                                 self._logger.debug(f'{Fore.RED}{ngram_orig}{Fore.RESET} -> {Fore.GREEN}{ngram}{Fore.RESET}'
@@ -1005,7 +1005,7 @@ class TextCleaner():
             f'\n{Fore.GREEN}###########################{Fore.RESET}\n\nRemoving from {from_word} to end of text:')
 
         match = re.search(f'[.\\n\s]+{from_word[::-1]}[.\s\\n\d]+', text[::-1], re.IGNORECASE if ignore_case else 0)
-        if match != None:
+        if match is not None:
             return self.remove_text_between_positions(text, -match.end()).strip()
         else:
             self._logger.debug(f'Could not find term {from_word}')
