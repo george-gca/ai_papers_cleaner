@@ -42,7 +42,7 @@ def _clean_and_get_urls_for_paper(paper: pd.Series, stop_when='') -> None:
     text_cleaner = TextCleaner(debug=True)
     title = paper["title"]
     text = literal_eval(paper["paper"])
-    stop = len(stop_when) > 0
+    # stop = len(stop_when) > 0
 
     _logger.debug(
         f'\nText from PDF:\n###########################\n{text}\n###########################')
@@ -75,7 +75,6 @@ def _clean_and_get_urls_for_paper(paper: pd.Series, stop_when='') -> None:
 
 def _clean_and_get_urls(df: pd.DataFrame) -> pd.DataFrame:
     text_cleaner = TextCleaner()
-    logger = logging.getLogger(__name__)
 
     # drop papers that are not usable
     total_papers = len(df)
