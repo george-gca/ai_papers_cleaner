@@ -162,7 +162,6 @@ class TextCleaner():
             'bias',
             'class',
             'cross',
-            'fairness',
             'nas', # neural architecture search
             'loss',
             'thus',
@@ -833,10 +832,10 @@ class TextCleaner():
         words_in_singular = [_lemmatize_fn(w) if w not in extra_lemmas_dict else extra_lemmas_dict[w] for w in tokens]
 
         # do this because how inflect library works (returns singular of the word or False)
-        words_in_singular = [w if not isinstance(w, bool) else tokens[i] for i, w in enumerate(words_in_singular)]
+        words_in_singular = [w if not isinstance(w, bool) and not w.endswith('ness') else tokens[i] for i, w in enumerate(words_in_singular)]
 
         if self._debug:
-            coloured_tokens = [w if (lemmatizer(w) == False) and (w not in extra_lemmas_dict) \
+            coloured_tokens = [w if ((lemmatizer(w) == False) and (w not in extra_lemmas_dict)) or not w.endswith('ness') \
                                else BG_HIGHLIGHT_COLOR + w + Back.RESET for w in tokens]
             self._logger.debug(' '.join(coloured_tokens))
 
