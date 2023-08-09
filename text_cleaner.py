@@ -623,7 +623,7 @@ class TextCleaner():
 
         new_words = []
         text_split = text.strip().split()
-        words_with_underline = [w for w in text_split if '_' in w]
+        words_with_underline = (w for w in text_split if '_' in w)
         for word in words_with_underline:
             splitted = word.split('_')
             recognized_words = [w for w in splitted if _recognized(w)]
@@ -631,8 +631,8 @@ class TextCleaner():
                 new_words.append(word)
 
         new_words += self._new_words
-        text = [w if spell_checker.check(
-            w) or w in new_words else f'{color}{w}{Back.RESET}' for w in text_split]
+        text = (w if spell_checker.check(w) or w in new_words \
+                else f'{color}{w}{Back.RESET}' for w in text_split)
         return ' '.join(text)
 
     def _run_regex(self, text: str, regexes: str | list[str] | re.Pattern,
@@ -713,11 +713,10 @@ class TextCleaner():
         previous_index = 0
 
         while match is not None:
-            original_word = text[previous_index +
-                                 match.start():previous_index+match.end()]
+            original_word = text[previous_index + match.start():previous_index + match.end()]
             word = re.sub(regex, '\\1\\2', original_word)
             if word not in not_existing_words_found:
-                if spell_checker.check(word) or word in self._new_words:
+                if word in self._new_words or spell_checker.check(word):
                     self._logger.debug(f'{Fore.RED}{original_word}{Fore.RESET} -> {Fore.GREEN}{word}{Fore.RESET}')
                     text = re.sub(original_word, word, text)
                 elif re.search(word, text) is not None and len(re.findall(word, text)) > min_occurrences:
@@ -768,8 +767,8 @@ class TextCleaner():
             i = n
             while i < len(words):
                 # only agglutinate if at least one of the words has more than 2 chars, none starts or
-                # ends with - and the first one is not in
-                # since it could alter the meaning of the sentence (e.g.: in different - indifferent)
+                # ends with - and the first one is not in since it could alter the meaning of the sentence
+                # (e.g.: in different - indifferent)
                 if any((len(w) > 2 for w in words[i-n:i])) and \
                     not any((w.startswith('-') or w.endswith('-') for w in words[i-n:i])) and \
                     words[i-n] != 'in':
@@ -815,28 +814,29 @@ class TextCleaner():
         return ' '.join(words)
 
     def plural_to_singular(self, text: str,
-                           lemmatizer: Callable[[
-                               str], str] = _grammar.singular_noun,
+                           lemmatizer: Callable[[str], str] = _grammar.singular_noun,
                            extra_lemmas_dict: dict[str, str] = {}) -> str:
         self._logger.debug(
             f'\n{Fore.GREEN}###########################{Fore.RESET}\n\nConverting from plural to singular:')
 
         tokens = word_tokenize(text)
+        # helpless, fairness, dangerous, heterogeneous, various
+        suffixes = ('less', 'mess', 'ness', 'ous')
 
         def _lemmatize_fn(word: str) -> str:
-            if word[-3:] == 'ous': # dangerous, heterogeneous, various
+            if word.endswith(suffixes):
                 return word
 
             return lemmatizer(word)
 
-        words_in_singular = [_lemmatize_fn(w) if w not in extra_lemmas_dict else extra_lemmas_dict[w] for w in tokens]
+        words_in_singular = (_lemmatize_fn(w) if w not in extra_lemmas_dict else extra_lemmas_dict[w] for w in tokens)
 
         # do this because how inflect library works (returns singular of the word or False)
-        words_in_singular = [w if not isinstance(w, bool) and not w.endswith('ness') else tokens[i] for i, w in enumerate(words_in_singular)]
+        words_in_singular = (w if not isinstance(w, bool) else tokens[i] for i, w in enumerate(words_in_singular))
 
         if self._debug:
-            coloured_tokens = [w if ((lemmatizer(w) == False) and (w not in extra_lemmas_dict)) or not w.endswith(('less', 'ness')) \
-                               else BG_HIGHLIGHT_COLOR + w + Back.RESET for w in tokens]
+            coloured_tokens = (w if (w not in extra_lemmas_dict) and (w.endswith(suffixes) or lemmatizer(w) == False) \
+                               else BG_HIGHLIGHT_COLOR + w + Back.RESET for w in tokens)
             self._logger.debug(' '.join(coloured_tokens))
 
         return ' '.join(words_in_singular)
@@ -919,8 +919,8 @@ class TextCleaner():
 
         if phrases and len(phrases) > 0:
             phrases += self._bib_info_to_remove
-            phrases = [fr'\b{p}' for p in phrases]
-            phrases = [fr'{p}\b' if not p.endswith('\)') else p for p in phrases]
+            phrases = (fr'\b{p}' for p in phrases)
+            phrases = (fr'{p}\b' if not p.endswith('\)') else p for p in phrases)
             regex = '|'.join(phrases)
             regex = '[\s]+'.join(regex.split())
             regex = re.compile(regex)
@@ -1104,8 +1104,8 @@ class TextCleaner():
 
         if phrases and len(phrases) > 0:
             phrases += self._phrases_to_remove
-            phrases = [fr'\b{p}' for p in phrases]
-            phrases = [fr'{p}\b' if not p.endswith('\)') else p for p in phrases]
+            phrases = (fr'\b{p}' for p in phrases)
+            phrases = (fr'{p}\b' if not p.endswith('\)') else p for p in phrases)
             regex = '|'.join(phrases)
             regex = '[\s]+'.join(regex.split())
             regex = re.compile(regex)
@@ -1168,12 +1168,11 @@ class TextCleaner():
         tokens = word_tokenize(text)
         stopwords.update(self._stop_words)
         if self._debug:
-            coloured_tokens = [
-                w if not w in stopwords and len(w) > 1 else BG_HIGHLIGHT_COLOR + w + Back.RESET for w in tokens]
+            coloured_tokens = (w if not w in stopwords and len(w) > 1 \
+                               else BG_HIGHLIGHT_COLOR + w + Back.RESET for w in tokens)
             self._logger.debug(' '.join(coloured_tokens))
 
-        tokens_without_sw = [
-            w for w in tokens if not w in stopwords and len(w) > 1]
+        tokens_without_sw = (w for w in tokens if not w in stopwords and len(w) > 1)
         return ' '.join(tokens_without_sw)
 
     def remove_symbols(self, text: str) -> str:
@@ -1255,7 +1254,7 @@ class TextCleaner():
         return self._run_regex(text, regex, ' ')
 
     def remove_word_by_prefix(self, text: str, prefixes: list[str]) -> str:
-        regexes = [f'{pref}[\w.\-\−\–\/]*[\s.,\d\)]?' for pref in prefixes]
+        regexes = (f'{pref}[\w.\-\−\–\/]*[\s.,\d\)]?' for pref in prefixes)
         regex = '|'.join(regexes)
         return self._run_regex(text, re.compile(regex), ' ')
 
