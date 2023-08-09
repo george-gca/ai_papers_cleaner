@@ -164,6 +164,7 @@ class TextCleaner():
             'cross',
             'nas', # neural architecture search
             'loss',
+            'stimulus',
             'thus',
         }
 
@@ -820,8 +821,8 @@ class TextCleaner():
             f'\n{Fore.GREEN}###########################{Fore.RESET}\n\nConverting from plural to singular:')
 
         tokens = word_tokenize(text)
-        # multibias, multiclass, across, address, helpless, multiloss, fairness, dangerous, heterogeneous, various
-        suffixes = ('bias', 'class', 'cross', 'dress', 'less', 'loss', 'mess', 'nas', 'ness', 'ous')
+        # multibias, multiclass, across, address, helpless, multiloss, fairness, dangerous, heterogeneous, various, decompress
+        suffixes = ('bias', 'nas', 'ous', 'ss')
 
         def _lemmatize_fn(word: str) -> str:
             if word.endswith(suffixes):
