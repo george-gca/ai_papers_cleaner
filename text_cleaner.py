@@ -835,7 +835,7 @@ class TextCleaner():
         words_in_singular = [w if not isinstance(w, bool) and not w.endswith('ness') else tokens[i] for i, w in enumerate(words_in_singular)]
 
         if self._debug:
-            coloured_tokens = [w if ((lemmatizer(w) == False) and (w not in extra_lemmas_dict)) or not w.endswith('ness') \
+            coloured_tokens = [w if ((lemmatizer(w) == False) and (w not in extra_lemmas_dict)) or not w.endswith(('less', 'ness')) \
                                else BG_HIGHLIGHT_COLOR + w + Back.RESET for w in tokens]
             self._logger.debug(' '.join(coloured_tokens))
 
