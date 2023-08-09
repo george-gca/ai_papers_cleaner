@@ -820,8 +820,8 @@ class TextCleaner():
             f'\n{Fore.GREEN}###########################{Fore.RESET}\n\nConverting from plural to singular:')
 
         tokens = word_tokenize(text)
-        # multiclass, helpless, fairness, dangerous, heterogeneous, various
-        suffixes = ('class', 'less', 'mess', 'nas', 'ness', 'ous')
+        # multibias, multiclass, across, address, helpless, multiloss, fairness, dangerous, heterogeneous, various
+        suffixes = ('bias', 'class', 'cross', 'dress', 'less', 'loss', 'mess', 'nas', 'ness', 'ous')
 
         def _lemmatize_fn(word: str) -> str:
             if word.endswith(suffixes):
