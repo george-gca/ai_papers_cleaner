@@ -822,7 +822,8 @@ class TextCleaner():
 
         tokens = word_tokenize(text)
         # multibias, multiclass, across, address, helpless, multiloss, fairness, dangerous, heterogeneous, various, decompress
-        suffixes = ('bias', 'nas', 'ous', 'ss')
+        # stimulus, analysis
+        suffixes = ('bias', 'lus', 'nas', 'ous', 'sis', 'ss')
 
         def _lemmatize_fn(word: str) -> str:
             if word.endswith(suffixes):
