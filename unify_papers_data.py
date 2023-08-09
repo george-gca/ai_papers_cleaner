@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from utils import setup_log, supported_conferences
+from utils import setup_log, SUPPORTED_CONFERENCES
 
 
 _logger = logging.getLogger(__name__)
@@ -34,7 +34,7 @@ def main(args):
     paper_info_sep = ';'
 
     # join papers' informations from all conferences
-    conferences = [c for c in supported_conferences if (data_dir / c).exists()]
+    conferences = [c for c in SUPPORTED_CONFERENCES if (data_dir / c).exists()]
     conference = conferences[0]
     conf, year = conference.split('/')
 

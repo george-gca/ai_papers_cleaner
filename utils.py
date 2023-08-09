@@ -9,7 +9,7 @@ import pandas as pd
 from tqdm.contrib.concurrent import process_map
 
 
-supported_conferences = [
+SUPPORTED_CONFERENCES = [
     'aaai/2017',
     'aaai/2018',
     'aaai/2019',
