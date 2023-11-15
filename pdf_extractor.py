@@ -91,6 +91,10 @@ if __name__ == '__main__':
     papers = conference_year_dir / 'papers'
     papers = [str(p) for p in papers.glob('*.pdf')]
 
+    if len(papers) == 0:
+        _logger.error(f"Couldn't find any paper in {conference_year_dir / 'papers'}")
+        sys.exit(0)
+
     if args.index != -1:
         paper = papers[args.index]
     elif len(args.file) > 0:
