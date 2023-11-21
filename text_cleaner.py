@@ -2156,7 +2156,9 @@ if __name__ == '__main__':
                 new_file_name[:-1]) + '_clean.' + new_file_name[-1]
             _logger.info(f'Saving DataFrame to {new_file_name}')
             new_df.to_csv(Path(args.file).parent / new_file_name, sep='|', index=False)
-            assert len(df) == len(new_df), f'DataFrame size changed after cleaning: {len(df)} -> {len(new_df)}'
+            if len(df) != len(new_df):
+                _logger.error(f'DataFrame size changed after cleaning: {len(df)} -> {len(new_df)}')
+                raise ValueError(f'DataFrame size changed after cleaning: {len(df)} -> {len(new_df)}')
 
         else:
             if args.n_processes == 1 or len(df) < args.n_processes * min_papers_per_process:

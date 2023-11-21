@@ -58,8 +58,9 @@ def main(args):
     joined_pdfs_urls['conference'] = conf
     joined_pdfs_urls['year'] = year
 
-    assert len(joined_abstracts) == len(joined_abstracts_clean) == len(joined_paper_info), \
-            f'Number of papers information after {conf} {year} differ: {len(joined_abstracts)}, {len(joined_abstracts_clean)}, and {len(joined_paper_info)}'
+    if not (len(joined_abstracts) == len(joined_abstracts_clean) == len(joined_paper_info)):
+        _logger.error(f'Number of papers information after {conf} {year} differ: {len(joined_abstracts)}, {len(joined_abstracts_clean)}, and {len(joined_paper_info)}')
+        raise ValueError(f'Number of papers information after {conf} {year} differ: {len(joined_abstracts)}, {len(joined_abstracts_clean)}, and {len(joined_paper_info)}')
 
     joined_papers_titles = set(joined_abstracts['title'])
 
@@ -109,8 +110,9 @@ def main(args):
 
         joined_papers_titles.update(papers_titles)
 
-        assert len(joined_abstracts) == len(joined_abstracts_clean) == len(joined_paper_info), \
-            f'Number of papers information after {conf} {year} differ: {len(joined_abstracts)}, {len(joined_abstracts_clean)}, and {len(joined_paper_info)}'
+        if not (len(joined_abstracts) == len(joined_abstracts_clean) == len(joined_paper_info)):
+            _logger.error(f'Number of papers information after {conf} {year} differ: {len(joined_abstracts)}, {len(joined_abstracts_clean)}, and {len(joined_paper_info)}')
+            raise ValueError(f'Number of papers information after {conf} {year} differ: {len(joined_abstracts)}, {len(joined_abstracts_clean)}, and {len(joined_paper_info)}')
 
     _logger.info(f'Final sizes:\n\tabstracts: {len(joined_abstracts):n}\n\tabstracts_clean: {len(joined_abstracts_clean):n}\n\tpaper_info: {len(joined_paper_info):n}\n\tpdfs_urls: {len(joined_pdfs_urls):n}')
 
@@ -119,7 +121,9 @@ def main(args):
     joined_paper_info.to_feather(data_dir / 'paper_info.feather', compression='zstd')
     joined_pdfs_urls.to_feather(data_dir / 'pdfs_urls.feather', compression='zstd')
 
-    assert len(joined_abstracts_clean) == len(joined_paper_info), f'{len(joined_abstracts_clean)} abstracts clean and {len(joined_paper_info)} papers infos'
+    if not (len(joined_abstracts_clean) == len(joined_paper_info)):
+        _logger.error(f'{len(joined_abstracts_clean)} abstracts clean and {len(joined_paper_info)} papers infos')
+        raise ValueError(f'{len(joined_abstracts_clean)} abstracts clean and {len(joined_paper_info)} papers infos')
 
 
 if __name__ == '__main__':

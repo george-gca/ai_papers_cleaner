@@ -135,7 +135,9 @@ if __name__ == '__main__':
                     extract_pdf_name, dirname=str(Path(papers[0]).parent), pdf_suffix=args.pdf_suffix)
                 paper_info_df = paper_info_df.drop(columns=['abstract_url'])
                 paper_info_df = paper_info_df[paper_info_df.pdf_url.isin(set(papers))]
-                assert len(paper_info_df) > 0
+                if len(paper_info_df) == 0:
+                    _logger.error(f'No paper info found in {paper_info}')
+                    raise ValueError(f'No paper info found in {paper_info}')
 
             else:
                 _logger.warning('Paper info file does not exists. Doing without it')
