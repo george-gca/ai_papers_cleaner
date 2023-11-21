@@ -1,6 +1,7 @@
 import argparse
 import logging
 from pathlib import Path
+from typing import Any
 import ftfy
 import json
 import re
@@ -16,6 +17,7 @@ from utils import parallelize_dataframe, setup_log
 
 
 _logger = logging.getLogger(__name__)
+KEEP_ARXIV_ID = True
 
 
 def _add_clean_title(d: dict[str, str | bool], text_cleaner: TextCleaner) -> dict[str, str | bool]:
@@ -108,7 +110,9 @@ def _rename_keys(d: dict[str, str | bool], regex: re.Pattern) -> dict[str, str |
         d['pdf_url'] = d.pop('url_pdf')
         d['conference'] = 'none'
 
-    d.pop('arxiv_id')
+    if not KEEP_ARXIV_ID:
+        d.pop('arxiv_id')
+
     d['urls'] = d.pop('paper_url')
     d['year'] = int(d.pop('date')[:4])
     return d
@@ -166,8 +170,9 @@ if __name__ == '__main__':
     df_infos = pd.read_feather(papers_info_file)
     df_infos.dropna(inplace=True)
 
-    assert len(df) == len(df_clean) == len(df_infos), \
-        f'DataFrames must have the same length, but instead are {len(df)}, {len(df_clean)}, and {len(df_infos)}'
+    if not (len(df) == len(df_clean) == len(df_infos)):
+        _logger.error(f'DataFrames must have the same length, but instead are {len(df)}, {len(df_clean)}, and {len(df_infos)}')
+        raise ValueError(f'DataFrames must have the same length, but instead are {len(df)}, {len(df_clean)}, and {len(df_infos)}')
 
     _logger.info(f'Loaded {len(df):n} abstracts from {abstracts_file}')
     _logger.info(f'Loaded {len(df_clean):n} clean abstracts from {abstracts_clean_file}')
@@ -195,21 +200,21 @@ if __name__ == '__main__':
 
     # loading codes from papers with code
     with open(args.codes_file) as f:
-        papers_codes = json.load(f)
+        papers_from_pwc = json.load(f)
 
-    _logger.info(f'Loaded {len(papers_codes):n} papers codes from papers with code')
+    _logger.info(f'Loaded {len(papers_from_pwc):n} papers codes from papers with code')
 
     useful_keys = {
         'paper_url',
         'repo_url',
     }
 
-    papers_codes = [_discard_keys(d, useful_keys) for d in papers_codes]
+    papers_from_pwc = [_discard_keys(d, useful_keys) for d in papers_from_pwc]
 
     # merge info from papers with code
     # discarding papers with title longer than 230 characters and without year
-    papers_codes = {d['paper_url']: d for d in papers_codes}
-    papers_abstracts = [_merge_dicts(d, papers_codes) \
+    papers_from_pwc = {d['paper_url']: d for d in papers_from_pwc}
+    papers_abstracts = [_merge_dicts(d, papers_from_pwc) \
                         for d in papers_abstracts \
                             if d['title'] and 0 < len(d['title']) < 230 and len(d['date']) > 0]
     _logger.info(f'After merging, {len(papers_abstracts):n} papers remain from papers with code')
@@ -230,23 +235,30 @@ if __name__ == '__main__':
 
     # if not, add it to all dataframes
     papers_already_in = {s for s in df[df.clean_title.isin(papers)].clean_title}
+
+    if KEEP_ARXIV_ID:
+        papers_already_in_dict = {k: v for k, v in papers.items() if k in papers_already_in}
+
     _logger.info(f'\n{len(papers_already_in):n} papers with info already found')
 
     # also consider papers with similar titles as already in previous data
     papers_not_in = {k: v for k, v in papers.items() if k not in papers_already_in}
 
     if args.run_parallel:
-        def _find_similar_titles(papers_to_check):
+        def _find_similar_titles(papers_to_check: dict[str, Any]) -> dict[str, str]:
             seq_matcher = SequenceMatcher()
-            similar_titles = set()
+            cleaner = TextCleaner()
+            similar_titles = {}
             for k, v in papers_to_check:
                 seq_matcher.set_seq2(v['title'])
+                # TODO: change this for for loop with iterrows
                 for _, t in df.title[abs(df.title.str.len() - len(v['title'])) < 5].items():
                     seq_matcher.set_seq1(t)
 
                     if seq_matcher.real_quick_ratio() > 0.95 and seq_matcher.quick_ratio() > 0.95:
                         # could also add: and seq_matcher.ratio() > 0.95:
-                        similar_titles.add(k)
+                        # TODO: use clean_title already created instead of recreating it here
+                        similar_titles[_clean_title(t, cleaner)] = k
                         break
 
             return similar_titles
@@ -255,21 +267,26 @@ if __name__ == '__main__':
         chunk_size = len(papers_not_in) // n_processes
         list_papers_not_in = list(papers_not_in.items())
         list_chunked = [list_papers_not_in[i:i + chunk_size] for i in range(0, len(list_papers_not_in), chunk_size)]
-        results = process_map(_find_similar_titles, list_chunked, max_workers=n_processes)
-        similar_titles = {v for s in results for v in s}
+        results: list[dict[str, str]] = process_map(_find_similar_titles, list_chunked, max_workers=n_processes)
+        similar_titles_dict = {k: v for s in results for k, v in s.items()}
+        similar_titles = set(similar_titles_dict.values())
 
     else:
         seq_matcher = SequenceMatcher()
         similar_titles = set()
+        similar_titles_dict = {}
         _logger.info('\nPrinting similar titles')
+
         for k, v in tqdm(papers_not_in.items(), desc='Similar titles', ncols=250):
             seq_matcher.set_seq2(v['title'])
+
             for _, t in df.title[abs(df.title.str.len() - len(v['title'])) < 5].iteritems():
                 seq_matcher.set_seq1(t)
 
                 if seq_matcher.real_quick_ratio() > 0.95 and seq_matcher.quick_ratio() > 0.95:
                     # could also add: and seq_matcher.ratio() > 0.95:
                     similar_titles.add(k)
+                    similar_titles_dict[_clean_title(t, text_cleaner)] = k
                     tqdm.write(f'{t}\n{v["title"]}\n')
                     break
 
@@ -291,6 +308,53 @@ if __name__ == '__main__':
     _logger.info('\nPrinting some data:')
     for i in range(5):
         _logger.info(papers_not_in[i])
+
+    # creating new paper_info with added papers_with_code info
+    useful_keys = {
+        'abstract_url',
+        'arxiv_id',
+        'conference',
+        'pdf_url',
+        'title',
+        'year',
+    }
+    add_to_paper_info = [_discard_keys(d, useful_keys) for d in papers_not_in]
+    _logger.info(f'\nWe had info for {len(df_infos):n} papers')
+
+    if KEEP_ARXIV_ID:
+        # print('Papers with arxiv_id:', sum(1 for t in df['clean_title'] if t in papers_already_in_dict or (t in similar_titles_dict and similar_titles_dict[t] in papers_already_in_dict)))
+        # print('From:', len(df['clean_title']))
+
+        df_infos['arxiv_id'] = [ \
+            papers_already_in_dict[t]['arxiv_id'] if t in papers_already_in_dict else
+            papers_already_in_dict[similar_titles_dict[t]]['arxiv_id'] if t in similar_titles_dict and similar_titles_dict[t] in papers_already_in_dict else None
+            for t in df['clean_title']
+        ]
+
+    df_infos = pd.concat([df_infos, pd.DataFrame(add_to_paper_info)], ignore_index=True)
+    _logger.info(f'Now we have info for {len(df_infos):n} papers')
+    df_infos['year'] = df_infos['year'].astype('int')
+
+    if KEEP_ARXIV_ID:
+        # df_infos.to_csv(papers_info_file.parent / 'paper_info_pwc.csv', sep=';', index=False)
+        df_infos.to_feather(papers_info_file.parent / 'paper_info_pwc_arxiv_id.feather', compression='zstd')
+    else:
+        df_infos.to_feather(papers_info_file.parent / 'paper_info_pwc.feather', compression='zstd')
+
+    # creating paper_info.csv inside papers_with_code dir
+    useful_keys = {
+        'abstract_url',
+        'arxiv_id',
+        'pdf_url',
+        'title',
+    }
+    create_paper_info = [_discard_keys(d, useful_keys) for d in papers_not_in]
+    df_paper_info = pd.DataFrame(create_paper_info)
+
+    if KEEP_ARXIV_ID:
+        df_paper_info.to_csv(papers_file.parent / 'paper_info_arxiv_id.csv', sep=';', index=False)
+    else:
+        df_paper_info.to_csv(papers_file.parent / 'paper_info.csv', sep=';', index=False)
 
     # creating new abstracts with added papers_with_code info
     useful_keys = {
@@ -319,32 +383,6 @@ if __name__ == '__main__':
     df_abstracts = pd.DataFrame(create_abstracts)
     df_abstracts.to_csv(papers_file.parent / 'abstracts.csv', sep='|', index=False)
 
-    # creating new paper_info with added papers_with_code info
-    useful_keys = {
-        'abstract_url',
-        'conference',
-        'pdf_url',
-        'title',
-        'year',
-    }
-    add_to_paper_info = [_discard_keys(d, useful_keys) for d in papers_not_in]
-    _logger.info(f'\nWe had info for {len(df_infos):n} papers')
-    df_infos = pd.concat([df_infos, pd.DataFrame(add_to_paper_info)], ignore_index=True)
-    _logger.info(f'Now we have info for {len(df_infos):n} papers')
-    # df_infos.to_csv(papers_info_file.parent / 'paper_info_pwc.csv', sep=';', index=False)
-    df_infos['year'] = df_infos['year'].astype('int')
-    df_infos.to_feather(papers_info_file.parent / 'paper_info_pwc.feather', compression='zstd')
-
-    # creating paper_info.csv inside papers_with_code dir
-    useful_keys = {
-        'abstract_url',
-        'pdf_url',
-        'title',
-    }
-    create_paper_info = [_discard_keys(d, useful_keys) for d in papers_not_in]
-    df_paper_info = pd.DataFrame(create_paper_info)
-    df_paper_info.to_csv(papers_file.parent / 'paper_info.csv', sep=';', index=False)
-
     # creating new pdfs_urls with added papers_with_code info
     useful_keys = {
         'clean_title',
@@ -355,6 +393,7 @@ if __name__ == '__main__':
     _logger.info(f'\nWe had urls for {len(df_urls):n} papers')
     df_urls = pd.concat([df_urls, pd.DataFrame(add_to_pdfs_urls)], ignore_index=True)
     _logger.info(f'Now we have urls for {len(df_urls):n} papers')
+
     # df_urls.to_csv(urls_file.parent / 'pdfs_urls_pwc.csv', sep='|', index=False)
     df_urls.to_feather(urls_file.parent / 'pdfs_urls_pwc.feather', compression='zstd')
 
