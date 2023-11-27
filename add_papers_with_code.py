@@ -188,13 +188,15 @@ if __name__ == '__main__':
 
     useful_keys = {
         'abstract',
-        'arxiv_id',
         'date',
         'paper_url',
         'title',
         'url_abs',
         'url_pdf',
     }
+
+    if KEEP_ARXIV_ID:
+        useful_keys.add('arxiv_id')
 
     papers_abstracts = [_discard_keys(d, useful_keys) for d in papers_abstracts]
 
@@ -312,12 +314,15 @@ if __name__ == '__main__':
     # creating new paper_info with added papers_with_code info
     useful_keys = {
         'abstract_url',
-        'arxiv_id',
         'conference',
         'pdf_url',
         'title',
         'year',
     }
+
+    if KEEP_ARXIV_ID:
+        useful_keys.add('arxiv_id')
+    
     add_to_paper_info = [_discard_keys(d, useful_keys) for d in papers_not_in]
     _logger.info(f'\nWe had info for {len(df_infos):n} papers')
 
@@ -334,27 +339,21 @@ if __name__ == '__main__':
     df_infos = pd.concat([df_infos, pd.DataFrame(add_to_paper_info)], ignore_index=True)
     _logger.info(f'Now we have info for {len(df_infos):n} papers')
     df_infos['year'] = df_infos['year'].astype('int')
-
-    if KEEP_ARXIV_ID:
-        # df_infos.to_csv(papers_info_file.parent / 'paper_info_pwc.csv', sep=';', index=False)
-        df_infos.to_feather(papers_info_file.parent / 'paper_info_pwc_arxiv_id.feather', compression='zstd')
-    else:
-        df_infos.to_feather(papers_info_file.parent / 'paper_info_pwc.feather', compression='zstd')
+    df_infos.to_feather(papers_info_file.parent / 'paper_info_pwc.feather', compression='zstd')
 
     # creating paper_info.csv inside papers_with_code dir
     useful_keys = {
         'abstract_url',
-        'arxiv_id',
         'pdf_url',
         'title',
     }
-    create_paper_info = [_discard_keys(d, useful_keys) for d in papers_not_in]
-    df_paper_info = pd.DataFrame(create_paper_info)
 
     if KEEP_ARXIV_ID:
-        df_paper_info.to_csv(papers_file.parent / 'paper_info_arxiv_id.csv', sep=';', index=False)
-    else:
-        df_paper_info.to_csv(papers_file.parent / 'paper_info.csv', sep=';', index=False)
+        useful_keys.add('arxiv_id')
+    
+    create_paper_info = [_discard_keys(d, useful_keys) for d in papers_not_in]
+    df_paper_info = pd.DataFrame(create_paper_info)
+    df_paper_info.to_csv(papers_file.parent / 'paper_info.csv', sep=';', index=False)
 
     # creating new abstracts with added papers_with_code info
     useful_keys = {
