@@ -187,7 +187,5 @@ if __name__ == '__main__':
         df = df.rename(columns={'paper': 'urls'})
         new_file_name = Path(args.file).name
         new_file_name = new_file_name.split('.')
-        new_file_name = '.'.join(
-            new_file_name[:-1]) + '_urls.' + new_file_name[-1]
-
+        new_file_name = '.'.join(new_file_name[:-1]) + '_urls.' + new_file_name[-1]
         df.to_csv(Path(args.file).parent / new_file_name, sep='|', index=False)

@@ -26,9 +26,9 @@ def _add_clean_title(d: dict[str, str | bool], text_cleaner: TextCleaner) -> dic
 
 
 def _clean_abstract(d: dict[str, str | bool]) -> dict[str, str | bool]:
-    text = [t for t in ftfy.fix_text(d['abstract']).split('\n') if len(t.strip()) > 0]
+    text = (t for t in ftfy.fix_text(d['abstract']).split('\n') if len(t.strip()) > 0)
     text = ' '.join(text).strip()
-    text = [t for t in text.split() if len(t.strip()) > 0]
+    text = (t for t in text.split() if len(t.strip()) > 0)
     d['abstract'] = ' '.join(text).strip()
     return d
 
@@ -322,7 +322,7 @@ if __name__ == '__main__':
 
     if KEEP_ARXIV_ID:
         useful_keys.add('arxiv_id')
-    
+
     add_to_paper_info = [_discard_keys(d, useful_keys) for d in papers_not_in]
     _logger.info(f'\nWe had info for {len(df_infos):n} papers')
 
@@ -350,7 +350,7 @@ if __name__ == '__main__':
 
     if KEEP_ARXIV_ID:
         useful_keys.add('arxiv_id')
-    
+
     create_paper_info = [_discard_keys(d, useful_keys) for d in papers_not_in]
     df_paper_info = pd.DataFrame(create_paper_info)
     df_paper_info.to_csv(papers_file.parent / 'paper_info.csv', sep=';', index=False)

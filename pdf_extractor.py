@@ -50,7 +50,7 @@ def extract_title(page: str, conference: str, year: str) -> str:
             end = i
             break
 
-    title = ' '.join([w.strip() for w in lines[begin:end]]).strip()
+    title = ' '.join(w.strip() for w in lines[begin:end]).strip()
     if title.upper() == title:
         title = title.title()
 

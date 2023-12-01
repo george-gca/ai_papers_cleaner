@@ -437,12 +437,13 @@ class TextCleaner():
         self._regexes['remove_composite_words'] = re.compile(regex)
 
         # remove_eg_ie_etal
-        regexes = ['e\.g\.',  # e.g.
-                    'i\.e\.',  # i.e.
-                    'w\.r\.t\.',  # w.r.t.
-                    # someone et.al.
-                    '(\(|\\b)[\w\-\−\–´\'&]+[\s]+et[.]?[\s]+al[ .\b]([\s]*(,[\s]+|\()[\d]+)?(\)|;|\\b)?',
-                    '(\\b|\()[\w]+[\s]+&[\s]+[\w]+([\s]+\(|,[\s]+)[\d]+(\)|\\b)',  # someone & something
+        regexes = [
+            'e\.g\.',  # e.g.
+            'i\.e\.',  # i.e.
+            'w\.r\.t\.',  # w.r.t.
+            # someone et.al.
+            '(\(|\\b)[\w\-\−\–´\'&]+[\s]+et[.]?[\s]+al[ .\b]([\s]*(,[\s]+|\()[\d]+)?(\)|;|\\b)?',
+            '(\\b|\()[\w]+[\s]+&[\s]+[\w]+([\s]+\(|,[\s]+)[\d]+(\)|\\b)',  # someone & something
         ]
         regex = '|'.join(regexes)
         self._regexes['remove_eg_ie_etal'] = re.compile(regex)
@@ -476,8 +477,7 @@ class TextCleaner():
         first_number_letter = '[\s.]+[0-9]*([\-\−\–\(.]?[\w]{1}[\)]?)?'
         next_number_letters = '((,[\s]+|[\s]+and[\s]+|\-)[0-9]*([\-\−\–\(.]?[\w]{1}[\)]?)?)*'
         suffix = '([\s]+(show[s]?|above|below))?([\s,.:\)]|\\b)'
-        regexes.append(
-            f'{prefix}{item}{first_number_letter}{next_number_letters}{suffix}')
+        regexes.append(f'{prefix}{item}{first_number_letter}{next_number_letters}{suffix}')
         # references citation
         regexes.append('\[[0-9][,\s\-\−\–0-9]*\]')
         regex = '|'.join(regexes)
@@ -496,15 +496,14 @@ class TextCleaner():
         self._regexes['remove_latexit_tags'] = re.compile(regex)
 
         # remove_metrics
-        metrics_regex_str = '|'.join([f'[\s]?{w}' for w in self._metrics])
+        metrics_regex_str = '|'.join(f'[\s]?{w}' for w in self._metrics)
         regex = f'[\s\(\[\{{\∼\~][0-9]+([.,][0-9]+)?([\s]?[%kmb]+|{metrics_regex_str})?[.,:\s\)\]\}}]'
         self._regexes['remove_metrics'] = re.compile(regex)
 
         # remove_numbers
         regexes = []
         # numbers
-        regexes.append(
-            '[\s\(\[\{\∼\~][-]?[0-9]+([.,][0-9]+)?([\s]+[-]?[0-9]+([.,][0-9]+)?)*[.,:\s\)\]\}]')
+        regexes.append('[\s\(\[\{\∼\~][-]?[0-9]+([.,][0-9]+)?([\s]+[-]?[0-9]+([.,][0-9]+)?)*[.,:\s\)\]\}]')
         # roman numbers
         regexes.append('[\(\s][ivx]+\)')
         # enumerates
@@ -515,8 +514,7 @@ class TextCleaner():
         # remove_numbers_only_lines
         regexes = []
         # numbers
-        regexes.append(
-            '^[\(]?[-−]?[0-9]+([.,][0-9]+)?([\s\+\-\−\–\±]+[\-\−\–]?[0-9]+([.,][0-9]+)?)*[\)]?[\s]*$')
+        regexes.append('^[\(]?[-−]?[0-9]+([.,][0-9]+)?([\s\+\-\−\–\±]+[\-\−\–]?[0-9]+([.,][0-9]+)?)*[\)]?[\s]*$')
         # headers
         regexes.append('^[0-9]+.([0-9]+[.]?){0,2}$')
         regex = '|'.join(regexes)
@@ -527,15 +525,15 @@ class TextCleaner():
         self._regexes['remove_ordinal_numbers'] = re.compile(regex)
 
         # remove_bib_info
-        bib_info_to_remove = [fr'\b{p}' for p in self._bib_info_to_remove]
-        bib_info_to_remove = [fr'{p}\b' if not p.endswith('\)') else p for p in bib_info_to_remove]
+        bib_info_to_remove = (fr'\b{p}' for p in self._bib_info_to_remove)
+        bib_info_to_remove = (fr'{p}\b' if not p.endswith('\)') else p for p in bib_info_to_remove)
         regex = '|'.join(bib_info_to_remove)
         regex = '[\s]+'.join(regex.split())
         self._regexes['remove_bib_info'] = re.compile(regex)
 
         # remove_phrases
-        phrases_to_remove = [fr'\b{p}' for p in self._phrases_to_remove]
-        phrases_to_remove = [fr'{p}\b' if not p.endswith('\)') and not p.endswith('.') else p for p in phrases_to_remove]
+        phrases_to_remove = (fr'\b{p}' for p in self._phrases_to_remove)
+        phrases_to_remove = (fr'{p}\b' if not p.endswith('\)') and not p.endswith('.') else p for p in phrases_to_remove)
         regex = '|'.join(phrases_to_remove)
         regex = '[\s]+'.join(regex.split())
         self._regexes['remove_phrases'] = re.compile(regex)
@@ -1074,7 +1072,7 @@ class TextCleaner():
 
         if metrics and len(metrics) > 0:
             metrics += self._metrics
-            metrics_regex_str = '|'.join([f'[\s]?{w}' for w in metrics])
+            metrics_regex_str = '|'.join(f'[\s]?{w}' for w in metrics)
             regex = f'[\s\(\[\{{\∼\~][0-9]+([.,][0-9]+)?([\s]?[%kmb]+|{metrics_regex_str})?[.,:\s\)\]\}}]'
             regex = re.compile(regex)
         else:
