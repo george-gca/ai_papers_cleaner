@@ -22,7 +22,7 @@ class TimerError(Exception):
 class Timer(ContextDecorator):
     """Time your code using a class, context manager, or decorator"""
 
-    bigger_than: float = 1.
+    bigger_than: float = .5
     color: str = 'red'
     enabled: bool = True
     logger: None | Callable[[str], None] = _logger.info
