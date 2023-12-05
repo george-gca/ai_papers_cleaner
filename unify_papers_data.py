@@ -1,4 +1,5 @@
 import argparse
+import datetime
 import locale
 import logging
 from pathlib import Path
@@ -34,7 +35,7 @@ def main(args):
     paper_info_sep = ';'
 
     # join papers' informations from all conferences
-    conferences = [c for c in SUPPORTED_CONFERENCES if (data_dir / c).exists()]
+    conferences = [f'{c}/{y}' for c in SUPPORTED_CONFERENCES for y in range(2017, datetime.date.today().year + 1) if (data_dir / f'{c}/{y}').exists()]
     conference = conferences[0]
     conf, year = conference.split('/')
 
