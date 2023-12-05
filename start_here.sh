@@ -41,6 +41,7 @@ conferences=(
     "emnlp 2020"
     "emnlp 2021"
     "emnlp 2022"
+    "emnlp 2023"
     "findings 2020"
     "findings 2021"
     "findings 2022"
@@ -122,8 +123,8 @@ paper_separator='<#sep#>'
 
 # extract_pdfs=1
 # extract_urls=1
-clean_abstracts=1
-clean_papers=1
+# clean_abstracts=1
+# clean_papers=1
 unify_papers=1
 papers_with_code=1
 
