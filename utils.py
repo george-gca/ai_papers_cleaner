@@ -46,6 +46,7 @@ SUPPORTED_CONFERENCES = [
     'emnlp/2020',
     'emnlp/2021',
     'emnlp/2022',
+    'emnlp/2023',
     'findings/2020',
     'findings/2021',
     'findings/2022',
