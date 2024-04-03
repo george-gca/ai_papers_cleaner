@@ -2,6 +2,13 @@
 
 Extract text from papers PDFs and abstracts, and remove uninformative words. This is helpful for building a corpus of papers to train a language model.
 
+Based on [CVPR_paper_search_tool by Jin Yamanaka](https://github.com/jiny2001/CVPR_paper_search_tool). I decided to split the code into multiple projects:
+
+- [AI Papers Scrapper](https://github.com/george-gca/ai_papers_scrapper) - Download papers pdfs and other information from main AI conferences
+- this project - Extract text from papers PDFs and abstracts, and remove uninformative words
+- [AI Papers Search Tool](https://github.com/george-gca/ai_papers_search_tool) - Automatic paper clustering
+- [AI Papers Searcher](https://github.com/george-gca/ai_papers_searcher) - Web app to search papers by keywords or similar papers
+
 ## Requirements
 
 [Docker](https://www.docker.com/) or, for local installation:
