@@ -74,7 +74,11 @@ def main(args):
         if not abstracts_file.exists():
             continue
 
-        df = pd.read_csv(abstracts_file, sep=abstract_sep, dtype=str, keep_default_na=False)
+        try:
+            df = pd.read_csv(abstracts_file, sep=abstract_sep, dtype=str, keep_default_na=False)
+        except Exception as e:
+            _logger.error(f'Failed to read {abstracts_file}')
+            raise e
 
         papers_titles = set(df['title'])
         papers_already_joined = papers_titles.intersection(joined_papers_titles)
