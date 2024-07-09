@@ -28,7 +28,7 @@ def _retrieve_urls(text: str) -> str:
         urls.append(url)
 
     urls = list(set(urls))
-    sorted_urls = []
+    sorted_urls: list[str] = []
     for url in reversed(urls):
         if 'github' in url or 'gitlab' in url:
             sorted_urls.insert(0, url)
@@ -186,6 +186,6 @@ if __name__ == '__main__':
                 df, _clean_and_get_urls, n_subprocesses)
         df = df.rename(columns={'paper': 'urls'})
         new_file_name = Path(args.file).name
-        new_file_name = new_file_name.split('.')
-        new_file_name = '.'.join(new_file_name[:-1]) + '_urls.' + new_file_name[-1]
+        splitted_file_name = new_file_name.split('.')
+        new_file_name = '.'.join(splitted_file_name[:-1]) + '_urls.' + splitted_file_name[-1]
         df.to_csv(Path(args.file).parent / new_file_name, sep='|', index=False)

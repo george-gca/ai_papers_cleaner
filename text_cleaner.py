@@ -581,9 +581,9 @@ class TextCleaner():
             self,
             regex: str | re.Pattern,
             text: str,
-            color: int = BG_HIGHLIGHT_COLOR,
+            color: str = BG_HIGHLIGHT_COLOR,
             border_line_limit: int = LINE_LIMIT,
-            flags: re.RegexFlag=0,
+            flags: re.RegexFlag=re.RegexFlag.NOFLAG,
             ) -> None:
         new_text = ''
         previous_start = 0
@@ -630,12 +630,9 @@ class TextCleaner():
                 new_words.append(word)
 
         new_words += self._new_words
-        text = (w if spell_checker.check(w) or w in new_words \
-                else f'{color}{w}{Back.RESET}' for w in text_split)
-        return ' '.join(text)
+        return ' '.join(w if spell_checker.check(w) or w in new_words else f'{color}{w}{Back.RESET}' for w in text_split)
 
-    def _run_regex(self, text: str, regexes: str | list[str] | re.Pattern,
-                   replacement: str = ' ', flags: re.RegexFlag=0) -> str:
+    def _run_regex(self, text: str, regexes: str | list[str] | re.Pattern, replacement: str = ' ', flags: re.RegexFlag=re.RegexFlag.NOFLAG) -> str:
         if isinstance(regexes, list):
             regexes = '|'.join(regexes)
             regexes = re.compile(regexes, flags)
@@ -919,11 +916,11 @@ class TextCleaner():
 
         if phrases and len(phrases) > 0:
             phrases += self._bib_info_to_remove
-            phrases = (fr'\b{p}' for p in phrases)
-            phrases = (fr'{p}\b' if not p.endswith('\)') else p for p in phrases)
-            regex = '|'.join(phrases)
-            regex = '[\s]+'.join(regex.split())
-            regex = re.compile(regex)
+            phrases_gen = (fr'\b{p}' for p in phrases)
+            phrases_gen = (fr'{p}\b' if not p.endswith('\)') else p for p in phrases_gen)
+            regex_str = '|'.join(phrases)
+            regex_str = '[\s]+'.join(regex_str.split())
+            regex = re.compile(regex_str)
         else:
             regex = self._regexes['remove_bib_info']
 
@@ -942,9 +939,9 @@ class TextCleaner():
 
         if composite_words and len(composite_words) > 0:
             composite_words += self._composite_words
-            regex = '|'.join(composite_words)
-            regex = '[\s]*[-_][\s]*'.join(regex.split('-'))
-            regex = re.compile(regex)
+            regex_str = '|'.join(composite_words)
+            regex_str = '[\s]*[-_][\s]*'.join(regex_str.split('-'))
+            regex = re.compile(regex_str)
         else:
             regex = self._regexes['remove_composite_words']
         return self._run_regex(text, regex, ' ')
@@ -991,9 +988,9 @@ class TextCleaner():
 
         if words_with_footnotes and len(words_with_footnotes) > 0:
             words_with_footnotes += self._words_with_footnotes
-            regex = '|'.join(words_with_footnotes)
-            regex = f'\\b({regex})[0-9]\\b'
-            regex = re.compile(regex)
+            regex_str = '|'.join(words_with_footnotes)
+            regex_str = f'\\b({regex_str})[0-9]\\b'
+            regex = re.compile(regex_str)
         else:
             regex = self._regexes['remove_footnotes_numbers']
 
@@ -1073,8 +1070,8 @@ class TextCleaner():
         if metrics and len(metrics) > 0:
             metrics += self._metrics
             metrics_regex_str = '|'.join(f'[\s]?{w}' for w in metrics)
-            regex = f'[\s\(\[\{{\∼\~][0-9]+([.,][0-9]+)?([\s]?[%kmb]+|{metrics_regex_str})?[.,:\s\)\]\}}]'
-            regex = re.compile(regex)
+            regex_str = f'[\s\(\[\{{\∼\~][0-9]+([.,][0-9]+)?([\s]?[%kmb]+|{metrics_regex_str})?[.,:\s\)\]\}}]'
+            regex = re.compile(regex_str)
         else:
             regex = self._regexes['remove_metrics']
 
@@ -1102,13 +1099,15 @@ class TextCleaner():
         self._logger.debug(
             f'\n{Fore.GREEN}###########################{Fore.RESET}\n\nRemoving phrases:')
 
-        if phrases and len(phrases) > 0:
+        if phrases is not None and len(phrases) > 0:
             phrases += self._phrases_to_remove
-            phrases = (fr'\b{p}' for p in phrases)
-            phrases = (fr'{p}\b' if not p.endswith('\)') else p for p in phrases)
-            regex = '|'.join(phrases)
-            regex = '[\s]+'.join(regex.split())
-            regex = re.compile(regex)
+
+            phrases_gen = (fr'\b{p}' for p in phrases)
+            phrases_gen = (fr'{p}\b' if not p.endswith('\)') else p for p in phrases_gen)
+
+            regex_str = '|'.join(phrases_gen)
+            regex_str = '[\s]+'.join(regex_str.split())
+            regex = re.compile(regex_str)
         else:
             regex = self._regexes['remove_phrases']
 
@@ -1120,9 +1119,9 @@ class TextCleaner():
 
         if two_chars and len(two_chars) > 0:
             two_chars += self._remaining_two_chars
-            regex = '|'.join(two_chars)
-            regex = '[\s]+'.join(regex.split())
-            regex = re.compile(regex)
+            regex_str = '|'.join(two_chars)
+            regex_str = '[\s]+'.join(regex_str.split())
+            regex = re.compile(regex_str)
         else:
             regex = self._regexes['remove_remaining_two_chars']
 
@@ -1979,7 +1978,7 @@ def _clean_papers(df: pd.DataFrame, show_progress: bool=False) -> pd.DataFrame:
     return df
 
 
-def _clean_title(paper: pd.Series) -> str:
+def _clean_title(paper: pd.Series) -> None:
     _logger.info(f'\nTitle: \n{paper["title"]}')
 
     text_cleaner = TextCleaner(debug=True)
@@ -2149,10 +2148,10 @@ if __name__ == '__main__':
                     df, _clean_abstracts, args.n_processes)
 
             new_file_name = Path(args.file).name
-            new_file_name = new_file_name.split('.')
-            new_file_name = '.'.join(
-                new_file_name[:-1]) + '_clean.' + new_file_name[-1]
+            splitted_file_name = new_file_name.split('.')
+            new_file_name = '.'.join(splitted_file_name[:-1]) + '_clean.' + splitted_file_name[-1]
             _logger.info(f'Saving DataFrame to {new_file_name}')
+
             new_df.to_csv(Path(args.file).parent / new_file_name, sep='|', index=False)
             if len(df) != len(new_df):
                 _logger.error(f'DataFrame size changed after cleaning: {len(df)} -> {len(new_df)}')
@@ -2172,8 +2171,8 @@ if __name__ == '__main__':
                     df, _clean_papers, args.n_processes)
 
             new_file_name = Path(args.file).name
-            new_file_name = new_file_name.split('.')
-            new_file_name = '.'.join(
-                new_file_name[:-1]) + '_clean.' + new_file_name[-1]
+            splitted_file_name = new_file_name.split('.')
+            new_file_name = '.'.join(splitted_file_name[:-1]) + '_clean.' + splitted_file_name[-1]
             _logger.info(f'Saving DataFrame to {new_file_name}')
+
             new_df.to_csv(Path(args.file).parent / new_file_name, sep='|', index=False)

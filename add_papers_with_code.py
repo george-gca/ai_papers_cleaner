@@ -20,20 +20,18 @@ _logger = logging.getLogger(__name__)
 KEEP_ARXIV_ID = True
 
 
-def _add_clean_title(d: dict[str, str | bool], text_cleaner: TextCleaner) -> dict[str, str | bool]:
+def _add_clean_title(d: dict[str, Any], text_cleaner: TextCleaner) -> dict[str, Any]:
     d['clean_title'] = _clean_title(d['title'], text_cleaner)
     return d
 
 
-def _clean_abstract(d: dict[str, str | bool]) -> dict[str, str | bool]:
-    text = (t for t in ftfy.fix_text(d['abstract']).split('\n') if len(t.strip()) > 0)
-    text = ' '.join(text).strip()
-    text = (t for t in text.split() if len(t.strip()) > 0)
-    d['abstract'] = ' '.join(text).strip()
+def _clean_abstract(d: dict[str, Any]) -> dict[str, Any]:
+    text = ' '.join(t for t in ftfy.fix_text(d['abstract']).split('\n') if len(t.strip()) > 0).strip()
+    d['abstract'] = ' '.join(t for t in text.split() if len(t.strip()) > 0).strip()
     return d
 
 
-def _convert_abstract_to_repr(d: dict[str, str | bool]) -> dict[str, str | bool]:
+def _convert_abstract_to_repr(d: dict[str, Any]) -> dict[str, Any]:
     d['abstract'] = repr(d['abstract'])
     return d
 
@@ -57,18 +55,18 @@ def _clean_title(title: str, text_cleaner: TextCleaner) -> str:
     return clean_title
 
 
-def _discard_keys(d: dict[str, str | bool], keys_to_keep: set[str]) -> dict[str, str | bool]:
+def _discard_keys(d: dict[str, Any], keys_to_keep: set[str]) -> dict[str, Any]:
     paper = {k: v for k, v in d.items() if k in keys_to_keep}
     return paper
 
 
-def _merge_dicts(d1: dict[str, str | bool], d2: dict[str, str | bool]) -> dict[str, str | bool]:
+def _merge_dicts(d1: dict[str, Any], d2: dict[str, Any]) -> dict[str, Any]:
     if d1['paper_url'] in d2:
         d1 = {**d1, **d2[d1['paper_url']]}
     return d1
 
 
-def _rename_keys(d: dict[str, str | bool], regex: re.Pattern) -> dict[str, str | bool]:
+def _rename_keys(d: dict[str, Any], regex: re.Pattern) -> dict[str, Any]:
     abs_url = d['url_abs'].lower()
     if d['arxiv_id'] is not None and len(d['arxiv_id']) > 0:
         arxiv_id = d['arxiv_id']
@@ -251,7 +249,7 @@ if __name__ == '__main__':
             seq_matcher = SequenceMatcher()
             cleaner = TextCleaner()
             similar_titles = {}
-            for k, v in papers_to_check:
+            for k, v in papers_to_check.items():
                 seq_matcher.set_seq2(v['title'])
                 # TODO: change this for for loop with iterrows
                 for _, t in df.title[abs(df.title.str.len() - len(v['title'])) < 5].items():
@@ -267,8 +265,8 @@ if __name__ == '__main__':
 
         n_processes = 3 * cpu_count() // 4
         chunk_size = len(papers_not_in) // n_processes
-        list_papers_not_in = list(papers_not_in.items())
-        list_chunked = [list_papers_not_in[i:i + chunk_size] for i in range(0, len(list_papers_not_in), chunk_size)]
+        all_papers_not_in = list(papers_not_in.items())
+        list_chunked = [all_papers_not_in[i:i + chunk_size] for i in range(0, len(all_papers_not_in), chunk_size)]
         results: list[dict[str, str]] = process_map(_find_similar_titles, list_chunked, max_workers=n_processes)
         similar_titles_dict = {k: v for s in results for k, v in s.items()}
         similar_titles = set(similar_titles_dict.values())
@@ -295,21 +293,21 @@ if __name__ == '__main__':
     _logger.info(f'\n{len(similar_titles):n} similar titles')
 
     papers_already_in = papers_already_in.union(similar_titles)
-    papers_not_in = [v for k, v in papers.items() if k not in papers_already_in]
-    _logger.info(f'\n{len(papers_not_in):n} new papers')
+    list_papers_not_in: list[dict[str, Any]] = [v for k, v in papers.items() if k not in papers_already_in]
+    _logger.info(f'\n{len(list_papers_not_in):n} new papers')
 
     # rename dicts' keys, filter by years and clean
     acl_conference_regex = re.compile(r'[\d]+.([\w]+)-[\d\w.]+')
-    papers_not_in = [_rename_keys(d, acl_conference_regex) for d in papers_not_in]
-    papers_not_in = [d for d in papers_not_in if d['year'] >= 2017 and 'openreview.net' not in d['abstract_url']]
-    papers_not_in = [_clean_abstract(d) for d in papers_not_in]
-    papers_not_in = [_add_clean_title(d, text_cleaner) for d in papers_not_in]
+    list_papers_not_in = [_rename_keys(d, acl_conference_regex) for d in list_papers_not_in]
+    list_papers_not_in = [d for d in list_papers_not_in if d['year'] >= 2017 and 'openreview.net' not in d['abstract_url']]
+    list_papers_not_in = [_clean_abstract(d) for d in list_papers_not_in]
+    list_papers_not_in = [_add_clean_title(d, text_cleaner) for d in list_papers_not_in]
 
-    _logger.info(f'\n{len(papers_not_in):n} papers to be added')
+    _logger.info(f'\n{len(list_papers_not_in):n} papers to be added')
 
     _logger.info('\nPrinting some data:')
     for i in range(5):
-        _logger.info(papers_not_in[i])
+        _logger.info(list_papers_not_in[i])
 
     # creating new paper_info with added papers_with_code info
     useful_keys = {
@@ -323,7 +321,7 @@ if __name__ == '__main__':
     if KEEP_ARXIV_ID:
         useful_keys.add('arxiv_id')
 
-    add_to_paper_info = [_discard_keys(d, useful_keys) for d in papers_not_in]
+    add_to_paper_info = [_discard_keys(d, useful_keys) for d in list_papers_not_in]
     _logger.info(f'\nWe had info for {len(df_infos):n} papers')
 
     if KEEP_ARXIV_ID:
@@ -351,7 +349,7 @@ if __name__ == '__main__':
     if KEEP_ARXIV_ID:
         useful_keys.add('arxiv_id')
 
-    create_paper_info = [_discard_keys(d, useful_keys) for d in papers_not_in]
+    create_paper_info = [_discard_keys(d, useful_keys) for d in list_papers_not_in]
     df_paper_info = pd.DataFrame(create_paper_info)
     df_paper_info.to_csv(papers_file.parent / 'paper_info.csv', sep=';', index=False)
 
@@ -362,7 +360,7 @@ if __name__ == '__main__':
         'title',
         'year',
     }
-    add_to_abstracts = [_discard_keys(d, useful_keys) for d in papers_not_in]
+    add_to_abstracts = [_discard_keys(d, useful_keys) for d in list_papers_not_in]
     _logger.info(f'\nWe had abstracts for {len(df):n} papers')
     df = pd.concat([df, pd.DataFrame(add_to_abstracts)], ignore_index=True)
     _logger.info(f'Now we have abstracts for {len(df):n} papers')
@@ -377,7 +375,7 @@ if __name__ == '__main__':
         'title',
         'year',
     }
-    create_abstracts = [_discard_keys(d, useful_keys) for d in papers_not_in]
+    create_abstracts = [_discard_keys(d, useful_keys) for d in list_papers_not_in]
     create_abstracts = [_convert_abstract_to_repr(d) for d in create_abstracts]
     df_abstracts = pd.DataFrame(create_abstracts)
     df_abstracts.to_csv(papers_file.parent / 'abstracts.csv', sep='|', index=False)
@@ -388,7 +386,7 @@ if __name__ == '__main__':
         'title',
         'urls',
     }
-    add_to_pdfs_urls = [_discard_keys(d, useful_keys) for d in papers_not_in]
+    add_to_pdfs_urls = [_discard_keys(d, useful_keys) for d in list_papers_not_in]
     _logger.info(f'\nWe had urls for {len(df_urls):n} papers')
     df_urls = pd.concat([df_urls, pd.DataFrame(add_to_pdfs_urls)], ignore_index=True)
     _logger.info(f'Now we have urls for {len(df_urls):n} papers')
@@ -401,7 +399,7 @@ if __name__ == '__main__':
         'title',
         'urls',
     }
-    create_pdfs_urls = [_discard_keys(d, useful_keys) for d in papers_not_in]
+    create_pdfs_urls = [_discard_keys(d, useful_keys) for d in list_papers_not_in]
     df_pdfs_urls = pd.DataFrame(create_pdfs_urls)
     df_pdfs_urls.to_csv(papers_file.parent / 'pdfs_urls.csv', sep='|', index=False)
     # df_pdfs_urls.to_feather(papers_file.parent / 'pdfs_urls.feather', compression='zstd')
