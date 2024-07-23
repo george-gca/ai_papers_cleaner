@@ -240,7 +240,7 @@ class TextCleaner():
                 'intelligence \(www.aaai.org\)',
             f'experimental economics {num_colon_hyphen_par}',
             'ijcv, [\w]+ [\d]+',
-            f'in [\d]+ aaai [\w]+ symposium series, [\d]+',
+            'in [\d]+ aaai [\w]+ symposium series, [\d]+',
             f'in ({ordinal_num} )?annual meeting of the association for computational linguistics' \
                 f'( and the ({ordinal_num} )?international joint conference on natural language processing)?',
             '(in proc |ieee )?international (conference on|journal of) computer vision (and (pattern|pat- tern) ' \
@@ -282,7 +282,7 @@ class TextCleaner():
             '(cam- bridge |cambridge )?university press(,)? [\d]+(.|,)',
             'workshop track',
             '(in|proceedings of the) [\w\d\s\-.]+, page(s)? [\d]+(-[\d]+)?([\w\s\-,]+)?',
-            f'international conference [\w\s\-\−\–]+, pp. [\d\s\-\−\–]+. [\w]+, [\d]+',
+            'international conference [\w\s\-\−\–]+, pp. [\d\s\-\−\–]+. [\w]+, [\d]+',
             #   international conference on intelligent robots and systems, pp. 5026-5033. ieee, 2012.
             # 'pages [\d]+-[\d]+',
             f'proceedings of the {ordinal_num} workshop [\w\s\-\−\–\(\)]+, page(s)? {num_or_hyphen} [\w\s]+, [\w\s]+' \
@@ -315,7 +315,7 @@ class TextCleaner():
             'statistical learning theory(, volume [\d]+)?',
             f'statistical science, {num_colon_hyphen_par}, [\d]+',
             f'the [\w\s,\-\−\–]+ aaai conference on artificial intelligence \(aaai{num_or_hyphen}\)',
-            f'university of [\w\s]+, (dept.|department of) [\w\s\-\−\–]+, [\w\s\-\−\–.]+, [\d]+(, [\d]+)?',
+            'university of [\w\s]+, (dept.|department of) [\w\s\-\−\–]+, [\w\s\-\−\–.]+, [\d]+(, [\d]+)?',
             # '(in|proceedings of the) [\w\d\s\-.]+, page(s)? [\d]+(-[\d]+)?(,|.) [\w\s]+, [\d]+',
         ]
 
@@ -2161,7 +2161,7 @@ if __name__ == '__main__':
             if args.n_processes == 1 or len(df) < args.n_processes * min_papers_per_process:
                 _logger.info(f'n_papers ({len(df)}) < n_processes * {min_papers_per_process} ({args.n_processes} * '
                              f'{min_papers_per_process} = {args.n_processes * min_papers_per_process})')
-                _logger.info(f'Running in a single process')
+                _logger.info('Running in a single process')
                 new_df = _clean_papers(df, show_progress=True)
             else:
                 _logger.info(f'n_papers ({len(df)}) >= n_processes * {min_papers_per_process} ({args.n_processes} * '

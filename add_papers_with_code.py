@@ -334,9 +334,13 @@ if __name__ == '__main__':
             for t in df['clean_title']
         ]
 
-    df_infos = pd.concat([df_infos, pd.DataFrame(add_to_paper_info)], ignore_index=True)
+    df_info_for_pwc = pd.DataFrame(add_to_paper_info)
+    df_info_for_pwc['source_url'] = -1
+
+    df_infos = pd.concat([df_infos, df_info_for_pwc], ignore_index=True)
     _logger.info(f'Now we have info for {len(df_infos):n} papers')
     df_infos['year'] = df_infos['year'].astype('int')
+    # df_infos['source_url'] = -1
     df_infos.to_feather(papers_info_file.parent / 'paper_info_pwc.feather', compression='zstd')
 
     # creating paper_info.csv inside papers_with_code dir
@@ -351,6 +355,7 @@ if __name__ == '__main__':
 
     create_paper_info = [_discard_keys(d, useful_keys) for d in list_papers_not_in]
     df_paper_info = pd.DataFrame(create_paper_info)
+    df_paper_info['source_url'] = -1
     df_paper_info.to_csv(papers_file.parent / 'paper_info.csv', sep=';', index=False)
 
     # creating new abstracts with added papers_with_code info
