@@ -245,11 +245,11 @@ if __name__ == '__main__':
     papers_not_in = {k: v for k, v in papers.items() if k not in papers_already_in}
 
     if args.run_parallel:
-        def _find_similar_titles(papers_to_check: dict[str, Any]) -> dict[str, str]:
+        def _find_similar_titles(papers_to_check: list[tuple[str, dict[str, Any]]]) -> dict[str, str]:
             seq_matcher = SequenceMatcher()
             cleaner = TextCleaner()
             similar_titles = {}
-            for k, v in papers_to_check.items():
+            for k, v in papers_to_check:
                 seq_matcher.set_seq2(v['title'])
                 # TODO: change this for for loop with iterrows
                 for _, t in df.title[abs(df.title.str.len() - len(v['title'])) < 5].items():
