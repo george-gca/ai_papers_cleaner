@@ -340,7 +340,7 @@ if __name__ == '__main__':
     df_infos = pd.concat([df_infos, df_info_for_pwc], ignore_index=True)
     _logger.info(f'Now we have info for {len(df_infos):n} papers')
     df_infos['year'] = df_infos['year'].astype('int')
-    # df_infos['source_url'] = -1
+    df_infos['source_url'] = df_infos['source_url'].astype('int')
     df_infos.to_feather(papers_info_file.parent / 'paper_info_pwc.feather', compression='zstd')
 
     # creating paper_info.csv inside papers_with_code dir
