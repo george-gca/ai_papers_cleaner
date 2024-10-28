@@ -40,12 +40,14 @@ unify_papers=1
 papers_with_code=1
 
 # uncomment these lines if you want to run only for a specific conference and year
-conference="siggraph"
-year=2024
+# conference="siggraph-asia"
+# year=2021
 
 abstract_only_conferences=(
     "kdd"
     "sigchi"
+    "siggraph"
+    "siggraph-asia"
 )
 
 current_year=$(date +'%Y')
