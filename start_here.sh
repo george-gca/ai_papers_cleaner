@@ -24,6 +24,8 @@ conferences=(
     "neurips_workshop"
     "sigchi"
     "sigdial"
+    "siggraph"
+    "siggraph-asia"
     "tacl"
     "wacv"
 )
@@ -38,8 +40,8 @@ unify_papers=1
 papers_with_code=1
 
 # uncomment these lines if you want to run only for a specific conference and year
-# conference="cvpr"
-# year=2023
+conference="siggraph"
+year=2024
 
 abstract_only_conferences=(
     "kdd"
