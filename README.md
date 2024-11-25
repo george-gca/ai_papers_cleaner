@@ -8,6 +8,7 @@ Based on [CVPR_paper_search_tool by Jin Yamanaka](https://github.com/jiny2001/CV
 - this project - Extract text from papers PDFs and abstracts, and remove uninformative words
 - [AI Papers Search Tool](https://github.com/george-gca/ai_papers_search_tool) - Automatic paper clustering
 - [AI Papers Searcher](https://github.com/george-gca/ai_papers_searcher) - Web app to search papers by keywords or similar papers
+- [AI Conferences Info](https://github.com/george-gca/ai_conferences_info) - Contains the titles, abstracts, urls, and authors names extracted from the papers
 
 ## Requirements
 
