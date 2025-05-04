@@ -18,6 +18,7 @@ conferences=(
     "icml"
     "ijcai"
     "ijcnlp"
+    "ijcv"
     "kdd"
     "naacl"
     "neurips"
@@ -27,27 +28,30 @@ conferences=(
     "siggraph"
     "siggraph-asia"
     "tacl"
+    "tpami"
     "wacv"
 )
 
 paper_separator='<#sep#>'
 
-# extract_pdfs=1
-# extract_urls=1
-# clean_abstracts=1
-# clean_papers=1
-unify_papers=1
-papers_with_code=1
+extract_pdfs=1
+extract_urls=1
+clean_abstracts=1
+clean_papers=1
+# unify_papers=1
+# papers_with_code=1
 
 # uncomment these lines if you want to run only for a specific conference and year
-# conference="siggraph-asia"
-# year=2021
+# conference="tpami"
+# year=2024
 
 abstract_only_conferences=(
+    "ijcv"
     "kdd"
     "sigchi"
     "siggraph"
     "siggraph-asia"
+    "tpami"
 )
 
 current_year=$(date +'%Y')
