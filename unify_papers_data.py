@@ -5,6 +5,7 @@ import logging
 from pathlib import Path
 
 import pandas as pd
+from tqdm import tqdm
 
 from utils import setup_log, SUPPORTED_CONFERENCES
 
@@ -65,60 +66,66 @@ def main(args):
 
     joined_papers_titles = set(joined_abstracts['title'])
 
-    for conference in conferences[1:]:
-        conf, year = conference.split('/')
+    with tqdm(conferences[1:]) as pbar:
+        for conference in pbar:
+            conf, year = conference.split('/')
+            pbar.set_description(f'{conf} {year}')
 
-        # adding new abstracts from this conference that have not been added yet
-        abstracts_file = data_dir / conference / 'abstracts.csv'
+            # adding new abstracts from this conference that have not been added yet
+            abstracts_file = data_dir / conference / 'abstracts.csv'
 
-        if not abstracts_file.exists():
-            continue
+            if not abstracts_file.exists():
+                _logger.error(f'File not found: {abstracts_file}')
+                continue
 
-        try:
-            df = pd.read_csv(abstracts_file, sep=abstract_sep, dtype=str, keep_default_na=False)
-        except Exception as e:
-            _logger.error(f'Failed to read {abstracts_file}')
-            continue
-            # raise e
+            try:
+                df = pd.read_csv(abstracts_file, sep=abstract_sep, dtype=str, keep_default_na=False)
+            except Exception as e:
+                try:
+                    df = pd.read_csv(abstracts_file, sep='\t', dtype=str, keep_default_na=False)
+                except Exception as e:
+                    _logger.error(f'Failed to read {abstracts_file}')
+                    continue
+                    # raise e
 
-        papers_titles = set(df['title'])
-        papers_already_joined = papers_titles.intersection(joined_papers_titles)
+            papers_titles = set(df['title'])
+            papers_already_joined = papers_titles.intersection(joined_papers_titles)
 
-        if len(papers_already_joined) > 0:
-            if len(papers_already_joined) == len(papers_titles):
-                _logger.warning(f'All {len(papers_already_joined)} papers from {conf} {year} already joined')
-            else:
-                _logger.warning(f'{len(papers_already_joined)} papers already joined from {conf} {year} out of {len(papers_titles)}')
+            if len(papers_already_joined) > 0:
+                if len(papers_already_joined) == len(papers_titles):
+                    _logger.warning(f'All {len(papers_already_joined)} papers from {conf} {year} already joined')
+                else:
+                    _logger.warning(f'{len(papers_already_joined)} papers already joined from {conf} {year} out of {len(papers_titles)}')
 
-                if len(papers_already_joined) <= 10:
-                    for paper in papers_already_joined:
-                        _logger.info(f'\t{paper}')
+                    if len(papers_already_joined) <= 10:
+                        for paper in papers_already_joined:
+                            _logger.info(f'\t{paper}')
 
-            if _logger.isEnabledFor(logging.DEBUG):
-                for title in papers_already_joined:
-                    _logger.debug(f'\t{title}')
+                if _logger.isEnabledFor(logging.DEBUG):
+                    for title in papers_already_joined:
+                        _logger.debug(f'\t{title}')
 
-            df = df[~df['title'].isin(papers_already_joined)]
+                df = df[~df['title'].isin(papers_already_joined)]
 
-        df['conference'] = conf
-        df['year'] = year
-        joined_abstracts = pd.concat([joined_abstracts, df], ignore_index=True)
+            df['conference'] = conf
+            df['year'] = year
+            joined_abstracts = pd.concat([joined_abstracts, df], ignore_index=True)
 
-        # adding new abstracts_clean from this conference that have not been added yet
-        joined_abstracts_clean = _concat_filtered_df(joined_abstracts_clean, data_dir / conference / 'abstracts_clean.csv', conf, year, abstract_sep, papers_already_joined)
+            # adding new abstracts_clean from this conference that have not been added yet
+            joined_abstracts_clean = _concat_filtered_df(joined_abstracts_clean, data_dir / conference / 'abstracts_clean.csv', conf, year, abstract_sep, papers_already_joined)
 
-        # adding new paper_info from this conference that have not been added yet
-        joined_paper_info = _concat_filtered_df(joined_paper_info, data_dir / conference / 'paper_info.csv', conf, year, paper_info_sep, papers_already_joined)
+            # adding new paper_info from this conference that have not been added yet
+            joined_paper_info = _concat_filtered_df(joined_paper_info, data_dir / conference / 'paper_info.csv', conf, year, paper_info_sep, papers_already_joined)
 
-        # adding new pdfs_urls from this conference that have not been added yet
-        if (data_dir / conference / 'pdfs_urls.csv').exists():
-            joined_pdfs_urls = _concat_filtered_df(joined_pdfs_urls, data_dir / conference / 'pdfs_urls.csv', conf, year, abstract_sep, papers_already_joined)
+            # adding new pdfs_urls from this conference that have not been added yet
+            if (data_dir / conference / 'pdfs_urls.csv').exists():
+                joined_pdfs_urls = _concat_filtered_df(joined_pdfs_urls, data_dir / conference / 'pdfs_urls.csv', conf, year, abstract_sep, papers_already_joined)
 
-        joined_papers_titles.update(papers_titles)
+            joined_papers_titles.update(papers_titles)
 
-        if not (len(joined_abstracts) == len(joined_abstracts_clean) == len(joined_paper_info)):
-            _logger.error(f'Number of papers information after {conf} {year} differ: {len(joined_abstracts)}, {len(joined_abstracts_clean)}, and {len(joined_paper_info)}')
-            raise ValueError(f'Number of papers information after {conf} {year} differ: {len(joined_abstracts)}, {len(joined_abstracts_clean)}, and {len(joined_paper_info)}')
+            if not (len(joined_abstracts) == len(joined_abstracts_clean) == len(joined_paper_info)):
+                _logger.error(f'Number of papers information after {conf} {year} differ: {len(joined_abstracts)}, {len(joined_abstracts_clean)}, and {len(joined_paper_info)}')
+                raise ValueError(f'Number of papers information after {conf} {year} differ: {len(joined_abstracts)}, {len(joined_abstracts_clean)}, and {len(joined_paper_info)}')
 
     _logger.info(f'Final sizes:\n\tabstracts: {len(joined_abstracts):n}\n\tabstracts_clean: {len(joined_abstracts_clean):n}\n\tpaper_info: {len(joined_paper_info):n}\n\tpdfs_urls: {len(joined_pdfs_urls):n}')
 
