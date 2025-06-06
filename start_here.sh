@@ -16,6 +16,7 @@ conferences=(
     "iccv"
     "iclr"
     "icml"
+    "icra"
     "ijcai"
     "ijcnlp"
     "ijcv"
@@ -38,14 +39,15 @@ extract_pdfs=1
 extract_urls=1
 clean_abstracts=1
 clean_papers=1
-# unify_papers=1
-# papers_with_code=1
+unify_papers=1
+papers_with_code=1
 
 # uncomment these lines if you want to run only for a specific conference and year
-# conference="tpami"
-# year=2024
+conference="cvpr"
+year=2025
 
 abstract_only_conferences=(
+    "icra"
     "ijcv"
     "kdd"
     "sigchi"
@@ -74,7 +76,7 @@ for conf in "${conferences[@]}"; do
                 # $run_command python pdf_extractor.py -p -s "$paper_separator" -c $conf -y $y -f "Lee_Revisiting_Self-Similarity_Structural_Embedding_for_Image_Retrieval_CVPR_2023" -l debug
             fi
 
-            # extract urls from pdf and save csv with titles and all found urls
+            # extract urls from pdf and save tsv with titles and all found urls
             if [ -n "$extract_urls" ] && [[ ! " ${abstract_only_conferences[*]} " =~ " $conf " ]]; then
                 echo -e "\nExtracting urls for $conf $y"
                 $run_command python url_scrapper.py -f data/$conf/$y/pdfs.csv
@@ -83,7 +85,7 @@ for conf in "${conferences[@]}"; do
             # clean papers abstracts
             if [ -n "$clean_abstracts" ]; then
                 echo -e "\nCleaning abstracts for $conf $y"
-                $run_command python text_cleaner.py -f data/$conf/$y/abstracts.csv -a
+                $run_command python text_cleaner.py -f data/$conf/$y/abstracts.tsv -a
             fi
 
             # clean papers content
