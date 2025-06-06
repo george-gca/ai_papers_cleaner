@@ -126,10 +126,10 @@ if __name__ == '__main__':
 
     else:
         if args.use_paper_info:
-            paper_info = conference_year_dir / 'paper_info.csv'
+            paper_info = conference_year_dir / 'paper_info.tsv'
 
             if paper_info.exists():
-                paper_info_df = pd.read_csv(paper_info, sep=';')
+                paper_info_df = pd.read_csv(paper_info, sep='\t')
                 paper_info_df.loc[:, 'pdf_url'] = paper_info_df['pdf_url'].astype(str)
                 paper_info_df.loc[:, 'pdf_url'] = paper_info_df['pdf_url'].apply(
                     extract_pdf_name, dirname=str(Path(papers[0]).parent), pdf_suffix=args.pdf_suffix)

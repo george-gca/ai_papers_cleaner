@@ -137,7 +137,7 @@ if __name__ == '__main__':
                         help='file name with papers abstracts')
     parser.add_argument('--papers_info_file', type=str, default='data/paper_info.feather',
                         help='file name with papers infos')
-    parser.add_argument('-s', '--separator', type=str, default='|',
+    parser.add_argument('-s', '--separator', type=str, default='\t',
                         help='csv separator')
     parser.add_argument('-u', '--urls_file', type=str, default='data/pdfs_urls.feather',
                         help='file name with papers urls')
@@ -343,7 +343,7 @@ if __name__ == '__main__':
     df_infos['source_url'] = df_infos['source_url'].astype('int')
     df_infos.to_feather(papers_info_file.parent / 'paper_info_pwc.feather', compression='zstd')
 
-    # creating paper_info.csv inside papers_with_code dir
+    # creating paper_info.tsv inside papers_with_code dir
     useful_keys = {
         'abstract_url',
         'pdf_url',
@@ -356,7 +356,7 @@ if __name__ == '__main__':
     create_paper_info = [_discard_keys(d, useful_keys) for d in list_papers_not_in]
     df_paper_info = pd.DataFrame(create_paper_info)
     df_paper_info['source_url'] = -1
-    df_paper_info.to_csv(papers_file.parent / 'paper_info.csv', sep=';', index=False)
+    df_paper_info.to_csv(papers_file.parent / 'paper_info.tsv', sep='\t', index=False)
 
     # creating new abstracts with added papers_with_code info
     useful_keys = {
@@ -369,11 +369,11 @@ if __name__ == '__main__':
     _logger.info(f'\nWe had abstracts for {len(df):n} papers')
     df = pd.concat([df, pd.DataFrame(add_to_abstracts)], ignore_index=True)
     _logger.info(f'Now we have abstracts for {len(df):n} papers')
-    # df.to_csv(abstracts_file.parent / 'abstracts_pwc.csv', sep='|', index=False)
+    # df.to_csv(abstracts_file.parent / 'abstracts_pwc.tsv', sep='\t', index=False)
     df['year'] = df['year'].astype('int')
     df.to_feather(abstracts_file.parent / 'abstracts_pwc.feather', compression='zstd')
 
-    # creating abstracts.csv inside papers_with_code dir
+    # creating abstracts.tsv inside papers_with_code dir
     useful_keys = {
         'abstract',
         'conference',
@@ -383,7 +383,7 @@ if __name__ == '__main__':
     create_abstracts = [_discard_keys(d, useful_keys) for d in list_papers_not_in]
     create_abstracts = [_convert_abstract_to_repr(d) for d in create_abstracts]
     df_abstracts = pd.DataFrame(create_abstracts)
-    df_abstracts.to_csv(papers_file.parent / 'abstracts.csv', sep='|', index=False)
+    df_abstracts.to_csv(papers_file.parent / 'abstracts.tsv', sep='\t', index=False)
 
     # creating new pdfs_urls with added papers_with_code info
     useful_keys = {
@@ -396,29 +396,29 @@ if __name__ == '__main__':
     df_urls = pd.concat([df_urls, pd.DataFrame(add_to_pdfs_urls)], ignore_index=True)
     _logger.info(f'Now we have urls for {len(df_urls):n} papers')
 
-    # df_urls.to_csv(urls_file.parent / 'pdfs_urls_pwc.csv', sep='|', index=False)
+    # df_urls.to_csv(urls_file.parent / 'pdfs_urls_pwc.tsv', sep='\t', index=False)
     df_urls.to_feather(urls_file.parent / 'pdfs_urls_pwc.feather', compression='zstd')
 
-    # creating pdfs_urls.csv inside papers_with_code dir
+    # creating pdfs_urls.tsv inside papers_with_code dir
     useful_keys = {
         'title',
         'urls',
     }
     create_pdfs_urls = [_discard_keys(d, useful_keys) for d in list_papers_not_in]
     df_pdfs_urls = pd.DataFrame(create_pdfs_urls)
-    df_pdfs_urls.to_csv(papers_file.parent / 'pdfs_urls.csv', sep='|', index=False)
+    df_pdfs_urls.to_csv(papers_file.parent / 'pdfs_urls.tsv', sep='\t', index=False)
     # df_pdfs_urls.to_feather(papers_file.parent / 'pdfs_urls.feather', compression='zstd')
 
     # cleaning abstracts
     n_processes = 3*cpu_count()//4
     df_abstracts_clean = parallelize_dataframe(df_abstracts, _clean_abstracts, n_processes)
     df_abstracts_clean = parallelize_dataframe(df_abstracts_clean, _clean_titles, n_processes)
-    df_abstracts_clean.to_csv(papers_file.parent / 'abstracts_clean.csv', sep='|', index=False)
+    df_abstracts_clean.to_csv(papers_file.parent / 'abstracts_clean.tsv', sep='\t', index=False)
 
     # creating new abstracts_clean with added papers_with_code info
     _logger.info(f'\nWe had clean abstracts for {len(df_clean):n} papers')
     df_clean = pd.concat([df_clean, df_abstracts_clean], ignore_index=True)
     _logger.info(f'Now we have clean abstracts for {len(df_clean):n} papers')
-    # df_clean.to_csv(abstracts_file.parent / 'abstracts_clean_pwc.csv', sep='|', index=False)
+    # df_clean.to_csv(abstracts_file.parent / 'abstracts_clean_pwc.tsv', sep='\t', index=False)
     df_clean['year'] = df_clean['year'].astype('int')
     df_clean.to_feather(abstracts_file.parent / 'abstracts_clean_pwc.feather', compression='zstd')

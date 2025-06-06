@@ -1419,7 +1419,15 @@ def _clean_abstracts(df: pd.DataFrame) -> pd.DataFrame:
     spell_checker = enchant.Dict("en_US")
     lemmatizer = lru_cache(maxsize=5_000)(_grammar.singular_noun)
 
-    df.loc[:, 'abstract'] = df['abstract'].apply(literal_eval)
+    try:
+        df.loc[:, 'abstract'] = df['abstract'].apply(literal_eval)
+    except SyntaxError:
+        for idx, row in df.iterrows():
+            try:
+                df.loc[idx, 'abstract'] = literal_eval(row['abstract'])
+            except SyntaxError:
+                pass
+
     df.loc[:, 'abstract'] = df['abstract'].apply(ftfy.fix_text)
     df.loc[:, 'abstract'] = df['abstract'].str.lower()
     df.loc[:, 'abstract'] = df['abstract'].apply(
@@ -2091,7 +2099,7 @@ if __name__ == '__main__':
                         help='log level to debug')
     parser.add_argument('-p', '--n_processes', type=int, default=3*multiprocessing.cpu_count()//4,
                         help='number of subprocesses to spawn')
-    parser.add_argument('-s', '--separator', type=str, default='|',
+    parser.add_argument('-s', '--separator', type=str, default='\t',
                         help='csv separator')
     parser.add_argument('-t', '--title', type=str, default='',
                         help='title of paper to debug')
@@ -2152,7 +2160,7 @@ if __name__ == '__main__':
             new_file_name = '.'.join(splitted_file_name[:-1]) + '_clean.' + splitted_file_name[-1]
             _logger.info(f'Saving DataFrame to {new_file_name}')
 
-            new_df.to_csv(Path(args.file).parent / new_file_name, sep='|', index=False)
+            new_df.to_csv(Path(args.file).parent / new_file_name, sep='\t', index=False)
             if len(df) != len(new_df):
                 _logger.error(f'DataFrame size changed after cleaning: {len(df)} -> {len(new_df)}')
                 raise ValueError(f'DataFrame size changed after cleaning: {len(df)} -> {len(new_df)}')
@@ -2172,7 +2180,7 @@ if __name__ == '__main__':
 
             new_file_name = Path(args.file).name
             splitted_file_name = new_file_name.split('.')
-            new_file_name = '.'.join(splitted_file_name[:-1]) + '_clean.' + splitted_file_name[-1]
+            new_file_name = '.'.join(splitted_file_name[:-1]) + '_clean.tsv'
             _logger.info(f'Saving DataFrame to {new_file_name}')
 
-            new_df.to_csv(Path(args.file).parent / new_file_name, sep='|', index=False)
+            new_df.to_csv(Path(args.file).parent / new_file_name, sep='\t', index=False)

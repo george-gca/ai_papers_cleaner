@@ -10,6 +10,8 @@ Based on [CVPR_paper_search_tool by Jin Yamanaka](https://github.com/jiny2001/CV
 - [AI Papers Searcher](https://github.com/george-gca/ai_papers_searcher) - Web app to search papers by keywords or similar papers
 - [AI Conferences Info](https://github.com/george-gca/ai_conferences_info) - Contains the titles, abstracts, urls, and authors names extracted from the papers
 
+> I made recent changes about the data format (changed most of it to tsv since it avoids some errors with the abstracts and titles of papers. If you have data in the old format (csv files with ; or | as separators) and want to convert it to the new version, check the section below.
+
 ## Requirements
 
 [Docker](https://www.docker.com/) or, for local installation:
@@ -97,9 +99,31 @@ conf=aaai
 year=2017
 ```
 
-To check the abstract cleaning process, uncomment the `clean_abstracts` line and comment the `clean_papers` line. To check the paper cleaning process, reverse the comments. You need to set the `conf` and `year` variables to the conference (as displayed in the `conferences` array in [start_here.sh](start_here.sh)) and year of your choice, and set one of `index` or `title` variables. The `index` variable is the index of the paper in the `abstracts.csv` or `pdfs.csv` file, while `title` can be a part of the title of the paper. If you set both, the `index` variable will be used. To call the clean_paper.sh script, run:
+To check the abstract cleaning process, uncomment the `clean_abstracts` line and comment the `clean_papers` line. To check the paper cleaning process, reverse the comments. You need to set the `conf` and `year` variables to the conference (as displayed in the `conferences` array in [start_here.sh](start_here.sh)) and year of your choice, and set one of `index` or `title` variables. The `index` variable is the index of the paper in the `abstracts.tsv` or `pdfs.csv` file, while `title` can be a part of the title of the paper. If you set both, the `index` variable will be used. To call the clean_paper.sh script, run:
 
 ```bash
 bash clean_paper.sh # if you're running without Docker
 make RUN_STRING="bash clean_paper.sh" run # if you're running with Docker
 ```
+
+## Migrating from old data
+
+Recently I changed how the data is stored after scraping in the scraping project, replacing all separators (`|` for abstracts or `;` for the rest of the files) for tabs (`\t`) and changing the file extension to `.tsv`. This was done to avoid conflicts when these symbols were used in the abstract, and even in the case where the authors were being parsed with `;` instead of `,` between them. To migrate your code to the new format, simply create a bash script in your data directory with the following content and run it:
+
+```bash
+#!/bin/bash
+find . -type f -name '*.csv' -print0 | sort -t '\0' -n | while IFS= read -r -d $'\0' file; do
+  if [[ $(head -n1 "$file") == *"|"* ]]; then
+    # if file uses | as separator, replace the first occurrence of | in every line to \t
+    echo "Processing $file"
+    sed -i 's/|/\t/' $file
+    mv $file "$(dirname $file)/$(basename $file .csv).tsv"
+  elif [[ $(head -n1 "$file") == *";"* ]]; then
+    # if file uses ; as separator, replace all occurrences of ; in every line to \t
+    echo "Processing $file"
+    sed -i 's/;/\t/g' $file
+    mv $file "$(dirname $file)/$(basename $file .csv).tsv"
+  fi
+done
+```
+
