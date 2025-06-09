@@ -7,6 +7,7 @@ fi
 conferences=(
     "aaai"
     "acl"
+    "aistats"
     "coling"
     "cvpr"
     "eacl"
@@ -30,6 +31,7 @@ conferences=(
     "siggraph-asia"
     "tacl"
     "tpami"
+    "uai"
     "wacv"
 )
 
@@ -39,12 +41,12 @@ extract_pdfs=1
 extract_urls=1
 clean_abstracts=1
 clean_papers=1
-unify_papers=1
-papers_with_code=1
+# unify_papers=1
+# papers_with_code=1
 
 # uncomment these lines if you want to run only for a specific conference and year
-conference="cvpr"
-year=2025
+conference="uai"
+# year=2025
 
 abstract_only_conferences=(
     "icra"

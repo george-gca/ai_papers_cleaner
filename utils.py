@@ -12,6 +12,7 @@ from tqdm.contrib.concurrent import process_map
 SUPPORTED_CONFERENCES = [
     'aaai',
     'acl',
+    'aistats',
     'coling',
     'cvpr',
     'eacl',
@@ -35,6 +36,7 @@ SUPPORTED_CONFERENCES = [
     'siggraph-asia',
     'tacl',
     'tpami',
+    'uai',
     'wacv',
 ]
 
