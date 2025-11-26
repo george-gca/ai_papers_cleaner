@@ -14,11 +14,14 @@ from utils import parallelize_dataframe, setup_log
 _logger = logging.getLogger(__name__)
 
 
+# Compile regex once at module level for better performance
+_URL_REGEX = re.compile(r'\b(ht|f)tp[s]?://[a-zA-Z0-9:/?_.&=#\-\~\˜]+[.,\d\)]?')
+
+
 def _retrieve_urls(text: str) -> str:
-    regex = '\\b(ht|f)tp[s]?://[a-zA-Z0-9:/?_.&=#\-\~\˜]+[.,\\d\)]?'
     urls = []
 
-    for match in re.finditer(regex, text):
+    for match in _URL_REGEX.finditer(text):
         start, end = match.span()
         url = text[start:end].strip()
         if url.endswith('.') or url.endswith(',') or url.endswith(')'):
@@ -87,38 +90,29 @@ def _clean_and_get_urls(df: pd.DataFrame) -> pd.DataFrame:
         _logger.debug(f'Dropped {total_papers - new_total_papers} papers')
         df = new_df
 
-    df.loc[:, 'paper'] = df['paper'].apply(literal_eval)
-    df.loc[:, 'paper'] = df['paper'].apply(
-        text_cleaner.remove_from_word_to_end, from_word='references')
-    df.loc[:, 'paper'] = df['paper'].apply(
-        text_cleaner.remove_from_word_to_end, from_word='acknowledgment')
-    df.loc[:, 'paper'] = df['paper'].apply(
-        text_cleaner.remove_from_word_to_end, from_word='acknowledgement')
-    df.loc[:, 'paper'] = df.apply(
-        _remove_before_title, axis=1, text_cleaner=text_cleaner)
-    # df.loc[:, 'paper'] = df.apply(
-    #     _remove_between_title_abstract, axis=1, text_cleaner=text_cleaner)
-    df.loc[:, 'paper'] = df['paper'].apply(
-        text_cleaner.replace_symbol_by_letters)
-    df.loc[:, 'paper'] = df['paper'].apply(
-        text_cleaner.remove_cid)
-    df.loc[:, 'paper'] = df['paper'].apply(
-        text_cleaner.remove_equations)
-    df.loc[:, 'paper'] = df['paper'].apply(
-        text_cleaner.remove_numbers_only_lines)
-    df.loc[:, 'paper'] = df['paper'].apply(
-        text_cleaner.remove_tabular_data)
-    # run these 3 again to remove consecutive lines
-    df.loc[:, 'paper'] = df['paper'].apply(
-        text_cleaner.remove_equations)
-    df.loc[:, 'paper'] = df['paper'].apply(
-        text_cleaner.remove_numbers_only_lines)
-    df.loc[:, 'paper'] = df['paper'].apply(
-        text_cleaner.remove_tabular_data)
-    df.loc[:, 'paper'] = df['paper'].str.split().str.join(' ')
-    df.loc[:, 'paper'] = df['paper'].apply(
-        text_cleaner.aglutinate_urls)
-    df.loc[:, 'paper'] = df['paper'].apply(_retrieve_urls)
+    # Chain operations to reduce DataFrame overhead
+    df['paper'] = (df['paper']
+        .apply(literal_eval)
+        .apply(text_cleaner.remove_from_word_to_end, from_word='references')
+        .apply(text_cleaner.remove_from_word_to_end, from_word='acknowledgment')
+        .apply(text_cleaner.remove_from_word_to_end, from_word='acknowledgement'))
+    
+    df['paper'] = df.apply(_remove_before_title, axis=1, text_cleaner=text_cleaner)
+    
+    df['paper'] = (df['paper']
+        .apply(text_cleaner.replace_symbol_by_letters)
+        .apply(text_cleaner.remove_cid)
+        .apply(text_cleaner.remove_equations)
+        .apply(text_cleaner.remove_numbers_only_lines)
+        .apply(text_cleaner.remove_tabular_data)
+        # run these 3 again to remove consecutive lines
+        .apply(text_cleaner.remove_equations)
+        .apply(text_cleaner.remove_numbers_only_lines)
+        .apply(text_cleaner.remove_tabular_data)
+        .str.split().str.join(' ')
+        .apply(text_cleaner.aglutinate_urls)
+        .apply(_retrieve_urls))
+    
     return df
 
 
