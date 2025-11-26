@@ -1998,7 +1998,8 @@ def _clean_titles(df: pd.DataFrame, progress=False) -> pd.DataFrame:
         pbar.set_description(text.ljust(pbar_desc_len))
         pbar.update()
 
-    with tqdm(total=15, disable=not progress, unit='step') as pbar:
+    # Reduce total steps since we combined hyphen operations
+    with tqdm(total=13, disable=not progress, unit='step') as pbar:
         # Chain operations to reduce intermediate DataFrame copies
         df['clean_title'] = (df['title']
             .apply(ftfy.fix_text))
@@ -2020,18 +2021,16 @@ def _clean_titles(df: pd.DataFrame, progress=False) -> pd.DataFrame:
         update_pbar(pbar, 'Removing latex inline equations')
 
         # Use pre-compiled regex for better performance
-        df['clean_title'] = df['clean_title'].str.replace(_BACKSLASH_PATTERN, '', regex=True)
+        df['clean_title'] = df['clean_title'].str.replace(_BACKSLASH_PATTERN, '')
         update_pbar(pbar, 'Replacing backslash')
 
         df['clean_title'] = (df['clean_title']
             .apply(text_cleaner.remove_symbols))
         update_pbar(pbar, 'Replacing symbols')
 
-        # Use pre-compiled regex for combining multiple hyphen replacements
-        df['clean_title'] = df['clean_title'].str.replace(_HYPHEN_PATTERN, '-', regex=True)
-        update_pbar(pbar, 'Replacing double hyphen')
-        update_pbar(pbar, 'Replacing hyphen')
-        update_pbar(pbar, 'Replacing hyphen')
+        # Use pre-compiled regex - combines all hyphen replacements into one
+        df['clean_title'] = df['clean_title'].str.replace(_HYPHEN_PATTERN, '-')
+        update_pbar(pbar, 'Replacing hyphens')
 
         df['clean_title'] = df['clean_title'].str.strip().str.split().str.join(' ')
         update_pbar(pbar, 'Removing trailing spaces')
