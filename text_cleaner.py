@@ -28,6 +28,10 @@ _grammar = inflect.engine()
 LINE_LIMIT = 5000
 BG_HIGHLIGHT_COLOR = Back.GREEN
 
+# Compile frequently used regexes at module level for better performance
+_HYPHEN_PATTERN = re.compile(r'--|–|−')
+_BACKSLASH_PATTERN = re.compile(r'\\')
+
 
 # TODO clean these
 # national_natural_science_foundation_china
@@ -2015,16 +2019,16 @@ def _clean_titles(df: pd.DataFrame, progress=False) -> pd.DataFrame:
             .apply(text_cleaner.remove_latex_inline_equations))
         update_pbar(pbar, 'Removing latex inline equations')
 
-        df['clean_title'] = df['clean_title'].str.replace(re.compile(r'\\'), '', regex=True)
+        # Use pre-compiled regex for better performance
+        df['clean_title'] = df['clean_title'].str.replace(_BACKSLASH_PATTERN, '', regex=True)
         update_pbar(pbar, 'Replacing backslash')
 
         df['clean_title'] = (df['clean_title']
             .apply(text_cleaner.remove_symbols))
         update_pbar(pbar, 'Replacing symbols')
 
-        # Combine multiple replace operations
-        df['clean_title'] = (df['clean_title']
-            .str.replace(re.compile(r'--|–|−'), '-', regex=True))
+        # Use pre-compiled regex for combining multiple hyphen replacements
+        df['clean_title'] = df['clean_title'].str.replace(_HYPHEN_PATTERN, '-', regex=True)
         update_pbar(pbar, 'Replacing double hyphen')
         update_pbar(pbar, 'Replacing hyphen')
         update_pbar(pbar, 'Replacing hyphen')
