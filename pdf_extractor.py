@@ -33,7 +33,9 @@ def extract_text(filepath: str) -> str:
         text_page = page.get_textpage()
         text += text_page.get_text_range()
         text += "\n"
-        [g.close() for g in (text_page, page)]
+        # Properly close resources instead of list comprehension
+        text_page.close()
+        page.close()
     pdf.close()
     return text
 

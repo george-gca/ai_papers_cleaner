@@ -28,6 +28,10 @@ _grammar = inflect.engine()
 LINE_LIMIT = 5000
 BG_HIGHLIGHT_COLOR = Back.GREEN
 
+# Compile frequently used regexes at module level for better performance
+_HYPHEN_PATTERN = re.compile(r'--|–|−')
+_BACKSLASH_PATTERN = re.compile(r'\\')
+
 
 # TODO clean these
 # national_natural_science_foundation_china
@@ -1417,73 +1421,50 @@ def _clean_abstract(paper: pd.Series, stop_when='') -> None:
 def _clean_abstracts(df: pd.DataFrame) -> pd.DataFrame:
     text_cleaner = TextCleaner()
     spell_checker = enchant.Dict("en_US")
-    lemmatizer = lru_cache(maxsize=5_000)(_grammar.singular_noun)
+    lemmatizer = lru_cache(maxsize=10_000)(_grammar.singular_noun)
 
     try:
-        df.loc[:, 'abstract'] = df['abstract'].apply(literal_eval)
+        df['abstract'] = df['abstract'].apply(literal_eval)
     except SyntaxError:
         for idx, row in df.iterrows():
             try:
-                df.loc[idx, 'abstract'] = literal_eval(row['abstract'])
+                df.at[idx, 'abstract'] = literal_eval(row['abstract'])
             except SyntaxError:
                 pass
 
-    df.loc[:, 'abstract'] = df['abstract'].apply(ftfy.fix_text)
-    df.loc[:, 'abstract'] = df['abstract'].str.lower()
-    df.loc[:, 'abstract'] = df['abstract'].apply(
-        text_cleaner.aglutinate_urls, spell_checker=spell_checker)
-    df.loc[:, 'abstract'] = df['abstract'].apply(
-        text_cleaner.remove_urls)
-    df.loc[:, 'abstract'] = df['abstract'].apply(
-        text_cleaner.replace_symbol_by_letters)
-    df.loc[:, 'abstract'] = df['abstract'].apply(
-        text_cleaner.remove_eg_ie_etal)
-    df.loc[:, 'abstract'] = df['abstract'].apply(
-        text_cleaner.remove_phrases)
-    df.loc[:, 'abstract'] = df['abstract'].apply(
-        text_cleaner.remove_shapes)
-    df.loc[:, 'abstract'] = df['abstract'].apply(
-        text_cleaner.remove_ordinal_numbers)
-    df.loc[:, 'abstract'] = df['abstract'].apply(
-        text_cleaner.remove_metrics)
-    df.loc[:, 'abstract'] = df['abstract'].apply(
-        text_cleaner.remove_numbers)
-    df.loc[:, 'abstract'] = df['abstract'].apply(
-        text_cleaner.remove_accents)
-    df.loc[:, 'abstract'] = df['abstract'].apply(
-        text_cleaner.remove_latex_commands)
-    df.loc[:, 'abstract'] = df['abstract'].apply(
-        text_cleaner.remove_latex_inline_equations)
-    df.loc[:, 'abstract'] = df['abstract'].apply(
-        text_cleaner.remove_html_tags)
-    df.loc[:, 'abstract'] = df['abstract'].apply(
-        text_cleaner.remove_symbols)
-    # do these 2 again after removing symbols
-    df.loc[:, 'abstract'] = df['abstract'].apply(
-        text_cleaner.remove_metrics)
-    df.loc[:, 'abstract'] = df['abstract'].apply(
-        text_cleaner.remove_numbers)
-    df.loc[:, 'abstract'] = df['abstract'].apply(
-        text_cleaner.aglutinate_word_sequences, spell_checker=spell_checker)
-    df.loc[:, 'abstract'] = df['abstract'].apply(
-        text_cleaner.aglutinate_words, spell_checker=spell_checker)
-    df.loc[:, 'abstract'] = df['abstract'].apply(
-        text_cleaner.remove_phrases)
-    df.loc[:, 'abstract'] = df['abstract'].apply(
-        text_cleaner.remove_footnotes_numbers)
-    df.loc[:, 'abstract'] = df['abstract'].apply(
-        text_cleaner.remove_composite_words)
-    df.loc[:, 'abstract'] = df['abstract'].apply(
-        text_cleaner.remove_hyphens_slashes)
-    # do this again to remove cases like 23/30
-    df.loc[:, 'abstract'] = df['abstract'].apply(
-        text_cleaner.remove_numbers)
-    df.loc[:, 'abstract'] = df['abstract'].apply(
-        text_cleaner.remove_stopwords)
-    df.loc[:, 'abstract'] = df['abstract'].apply(
-        text_cleaner.plural_to_singular, lemmatizer=lemmatizer)
-    df.loc[:, 'abstract'] = df['abstract'].apply(
-        text_cleaner.replace_hyphens_by_underline)
+    # Chain operations to reduce intermediate DataFrame copies
+    df['abstract'] = (df['abstract']
+        .apply(ftfy.fix_text)
+        .str.lower()
+        .apply(text_cleaner.aglutinate_urls, spell_checker=spell_checker)
+        .apply(text_cleaner.remove_urls)
+        .apply(text_cleaner.replace_symbol_by_letters)
+        .apply(text_cleaner.remove_eg_ie_etal)
+        .apply(text_cleaner.remove_phrases)
+        .apply(text_cleaner.remove_shapes)
+        .apply(text_cleaner.remove_ordinal_numbers)
+        .apply(text_cleaner.remove_metrics)
+        .apply(text_cleaner.remove_numbers)
+        .apply(text_cleaner.remove_accents)
+        .apply(text_cleaner.remove_latex_commands)
+        .apply(text_cleaner.remove_latex_inline_equations)
+        .apply(text_cleaner.remove_html_tags)
+        .apply(text_cleaner.remove_symbols)
+        # do these 2 again after removing symbols
+        .apply(text_cleaner.remove_metrics)
+        .apply(text_cleaner.remove_numbers)
+        .apply(text_cleaner.aglutinate_word_sequences, spell_checker=spell_checker)
+        .apply(text_cleaner.aglutinate_words, spell_checker=spell_checker)
+        .apply(text_cleaner.remove_phrases)
+        .apply(text_cleaner.remove_footnotes_numbers)
+        .apply(text_cleaner.remove_composite_words)
+        .apply(text_cleaner.remove_hyphens_slashes)
+        # do this again to remove cases like 23/30
+        .apply(text_cleaner.remove_numbers)
+        .apply(text_cleaner.remove_stopwords)
+        .apply(text_cleaner.plural_to_singular, lemmatizer=lemmatizer)
+        .apply(text_cleaner.replace_hyphens_by_underline)
+    )
 
     # _logger.info(f'lemmatizer cache info: {lemmatizer.cache_info()}')
 
@@ -1772,7 +1753,7 @@ def _clean_paper(paper: pd.Series, stop_when='') -> None:
 def _clean_papers(df: pd.DataFrame, show_progress: bool=False) -> pd.DataFrame:
     text_cleaner = TextCleaner()
     spell_checker = enchant.Dict("en_US")
-    lemmatizer = lru_cache(maxsize=15_000)(_grammar.singular_noun)
+    lemmatizer = lru_cache(maxsize=20_000)(_grammar.singular_noun)
 
     remove_first_introduction_occurrence = partial(text_cleaner.remove_first_word_occurrence, word='introduction')
     remove_last_conclusion_occurrence = partial(text_cleaner.remove_last_word_occurrence, word='conclusion')
@@ -1795,180 +1776,180 @@ def _clean_papers(df: pd.DataFrame, show_progress: bool=False) -> pd.DataFrame:
         pbar.update()
 
     with tqdm(total=56, disable=not show_progress, unit='step', ncols=250) as pbar:
-        df.loc[:, 'paper'] = df['paper'].apply(literal_eval)
+        df['paper'] = df['paper'].apply(literal_eval)
         update_pbar(pbar, 'Reading papers')
-        df.loc[:, 'paper'] = df['paper'].apply(ftfy.fix_text)
+        df['paper'] = df['paper'].apply(ftfy.fix_text)
         update_pbar(pbar, 'Fixing unicode')
-        df.loc[:, 'paper'] = df['paper'].str.lower()
+        df['paper'] = df['paper'].str.lower()
         update_pbar(pbar, 'Lowering case')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.remove_from_word_to_end, from_word='references')
         update_pbar(pbar, 'Removing references')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.remove_from_word_to_end, from_word='acknowledgment')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.remove_from_word_to_end, from_word='acknowledgement')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.remove_from_word_to_end, from_word='acknowledgments')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.remove_from_word_to_end, from_word='acknowledgements')
         update_pbar(pbar, 'Removing acknowledgments')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.remove_from_word_to_end, from_word='funding transparency statement')
         update_pbar(pbar, 'Removing funding')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.remove_from_word_to_end, from_word='credit authorship contribution statement')
         update_pbar(pbar, 'Removing credit authorship')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.remove_from_word_to_end, from_word='declarations of competing interest')
         update_pbar(pbar, 'Removing competing interest')
-        df.loc[:, 'paper'] = df.apply(
+        df['paper'] = df.apply(
             _remove_before_title, axis=1, text_cleaner=text_cleaner)
         update_pbar(pbar, 'Removing header')
-        df.loc[:, 'paper'] = df.apply(
+        df['paper'] = df.apply(
             _remove_between_title_abstract, axis=1, text_cleaner=text_cleaner)
         update_pbar(pbar, 'Removing authors')
-        df.loc[:, 'paper'] = df['paper'].apply(remove_first_introduction_occurrence)
+        df['paper'] = df['paper'].apply(remove_first_introduction_occurrence)
         update_pbar(pbar, 'Removing introduction title')
-        df.loc[:, 'paper'] = df['paper'].apply(remove_last_conclusion_occurrence)
+        df['paper'] = df['paper'].apply(remove_last_conclusion_occurrence)
         update_pbar(pbar, 'Removing conclusion title')
-        df.loc[:, 'paper'] = df['paper'].apply(remove_last_discussion_occurrence)
+        df['paper'] = df['paper'].apply(remove_last_discussion_occurrence)
         update_pbar(pbar, 'Removing discussion title')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.replace_symbol_by_letters)
         update_pbar(pbar, 'Replacing symbols')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.remove_cid)
         update_pbar(pbar, 'Removing cid')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.remove_equations)
         update_pbar(pbar, 'Removing equations')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.remove_numbers_only_lines)
         update_pbar(pbar, 'Removing numeric lines')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.remove_tabular_data)
         update_pbar(pbar, 'Removing tables')
         # run these 3 again to remove consecutive lines
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.remove_equations)
         update_pbar(pbar, 'Removing equations')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.remove_numbers_only_lines)
         update_pbar(pbar, 'Removing numeric lines')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.remove_tabular_data)
         update_pbar(pbar, 'Removing tables')
-        df.loc[:, 'paper'] = df['paper'].str.split().str.join(' ')
+        df['paper'] = df['paper'].str.split().str.join(' ')
         update_pbar(pbar, 'Removing line breaks')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.aglutinate_urls)
         update_pbar(pbar, 'Aglutinating urls')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.remove_urls)
         update_pbar(pbar, 'Removing urls')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.remove_emails)
         update_pbar(pbar, 'Removing emails')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.remove_eg_ie_etal)
         update_pbar(pbar, 'Removing e.g., i.e.')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.remove_latexit_tags)
         update_pbar(pbar, 'Removing latex tags')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.remove_bib_info)
         update_pbar(pbar, 'Removing bib')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.remove_phrases)
         update_pbar(pbar, 'Removing phrases')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.remove_shapes)
         update_pbar(pbar, 'Removing shapes')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.remove_ordinal_numbers)
         update_pbar(pbar, 'Removing ordinals')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.remove_specific_expressions)
         update_pbar(pbar, 'Removing expressions')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.remove_item_citation)
         update_pbar(pbar, 'Removing item citations')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.remove_metrics)
         update_pbar(pbar, 'Removing metrics')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.remove_numbers)
         update_pbar(pbar, 'Removing numbers')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.remove_accents)
         update_pbar(pbar, 'Removing accents')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.remove_latex_commands)
         update_pbar(pbar, 'Removing latex commands')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.remove_latex_inline_equations)
         update_pbar(pbar, 'Removing latex equations')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.remove_html_tags)
         update_pbar(pbar, 'Removing HTML tags')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.remove_symbols)
         update_pbar(pbar, 'Removing symbols')
         # do these 2 again after removing symbols
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.remove_metrics)
         update_pbar(pbar, 'Removing metrics')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.remove_numbers)
         update_pbar(pbar, 'Removing numbers')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.aglutinate_word_sequences, spell_checker=spell_checker)
         update_pbar(pbar, 'Aglutinating words sequences')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.aglutinate_words, spell_checker=spell_checker)
         update_pbar(pbar, 'Aglutinating words')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.remove_bib_info)
         update_pbar(pbar, 'Removing bib')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.remove_phrases)
         update_pbar(pbar, 'Removing phrases')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.remove_footnotes_numbers)
         update_pbar(pbar, 'Removing footnotes')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.remove_composite_words)
         update_pbar(pbar, 'Removing composite words')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.remove_hyphens_slashes)
         update_pbar(pbar, 'Removing hyphens')
         # do this again to remove cases like 23/30
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.remove_numbers)
         update_pbar(pbar, 'Removing numbers')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.remove_stopwords)
         update_pbar(pbar, 'Removing stopwords')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.plural_to_singular, lemmatizer=lemmatizer)
         update_pbar(pbar, 'Converting to singular')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.replace_hyphens_by_underline)
         update_pbar(pbar, 'Replacing hyphens')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.remove_repeated)
         update_pbar(pbar, 'Removing repeated words')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.remove_repeated, step=2)
         update_pbar(pbar, 'Removing repeated words')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             _remove_last_word_if_number)
         update_pbar(pbar, 'Removing last word')
-        df.loc[:, 'paper'] = df['paper'].apply(
+        df['paper'] = df['paper'].apply(
             text_cleaner.remove_remaining_two_chars)
         update_pbar(pbar, 'Removing two chars words')
-        df.loc[:, 'paper'] = df['paper'].str.split().str.join(' ')
+        df['paper'] = df['paper'].str.split().str.join(' ')
         update_pbar(pbar, 'Tyding up')
 
     total_papers = len(df)
@@ -2017,50 +1998,51 @@ def _clean_titles(df: pd.DataFrame, progress=False) -> pd.DataFrame:
         pbar.set_description(text.ljust(pbar_desc_len))
         pbar.update()
 
-    with tqdm(total=15, disable=not progress, unit='step') as pbar:
-        df.loc[:, 'clean_title'] = df['title'].apply(ftfy.fix_text)
+    # Reduce total steps since we combined hyphen operations
+    with tqdm(total=13, disable=not progress, unit='step') as pbar:
+        # Chain operations to reduce intermediate DataFrame copies
+        df['clean_title'] = (df['title']
+            .apply(ftfy.fix_text))
         update_pbar(pbar, 'Fix unicode')
 
         df['clean_title'] = df['clean_title'].str.lower()
         update_pbar(pbar, 'Lowering case')
 
-        df.loc[:, 'clean_title'] = df['clean_title'].apply(text_cleaner.remove_accents)
+        df['clean_title'] = (df['clean_title']
+            .apply(text_cleaner.remove_accents))
         update_pbar(pbar, 'Remove accents')
 
-        df.loc[:, 'clean_title'] = df['clean_title'].apply(text_cleaner.remove_latex_commands)
+        df['clean_title'] = (df['clean_title']
+            .apply(text_cleaner.remove_latex_commands))
         update_pbar(pbar, 'Remove latex commands')
 
-        df.loc[:, 'clean_title'] = df['clean_title'].apply(text_cleaner.remove_latex_inline_equations)
+        df['clean_title'] = (df['clean_title']
+            .apply(text_cleaner.remove_latex_inline_equations))
         update_pbar(pbar, 'Removing latex inline equations')
 
-        df.loc[:, 'clean_title'] = df['clean_title'].str.replace(re.compile(r'\\'), '', regex=True)
+        # Use pre-compiled regex for better performance
+        df['clean_title'] = df['clean_title'].str.replace(_BACKSLASH_PATTERN, '')
         update_pbar(pbar, 'Replacing backslash')
 
-        df.loc[:, 'clean_title'] = df['clean_title'].apply(text_cleaner.remove_symbols)
+        df['clean_title'] = (df['clean_title']
+            .apply(text_cleaner.remove_symbols))
         update_pbar(pbar, 'Replacing symbols')
 
-        df.loc[:, 'clean_title'] = df['clean_title'].str.replace(re.compile(r'--'), '-', regex=True)
-        update_pbar(pbar, 'Replacing double hyphen')
+        # Use pre-compiled regex - combines all hyphen replacements into one
+        df['clean_title'] = df['clean_title'].str.replace(_HYPHEN_PATTERN, '-')
+        update_pbar(pbar, 'Replacing hyphens')
 
-        df.loc[:, 'clean_title'] = df['clean_title'].str.replace(re.compile(r'–'), '-', regex=True)
-        update_pbar(pbar, 'Replacing hyphen')
-
-        df.loc[:, 'clean_title'] = df['clean_title'].str.replace(re.compile(r'−'), '-', regex=True)
-        update_pbar(pbar, 'Replacing hyphen')
-
-        df.loc[:, 'clean_title'] = df['clean_title'].str.strip().str.split().str.join(' ')
+        df['clean_title'] = df['clean_title'].str.strip().str.split().str.join(' ')
         update_pbar(pbar, 'Removing trailing spaces')
 
-        df.loc[:, 'clean_title'] = df['clean_title'].apply(text_cleaner.remove_hyphens_slashes)
+        df['clean_title'] = (df['clean_title']
+            .apply(text_cleaner.remove_hyphens_slashes)
+            .apply(text_cleaner.remove_stopwords)
+            .apply(text_cleaner.plural_to_singular)
+            .apply(text_cleaner.replace_hyphens_by_underline))
         update_pbar(pbar, 'Removing hyphens and slashes')
-
-        df.loc[:, 'clean_title'] = df['clean_title'].apply(text_cleaner.remove_stopwords)
         update_pbar(pbar, 'Removing stopwords')
-
-        df.loc[:, 'clean_title'] = df['clean_title'].apply(text_cleaner.plural_to_singular)
         update_pbar(pbar, 'Converting to singular')
-
-        df.loc[:, 'clean_title'] = df['clean_title'].apply(text_cleaner.replace_hyphens_by_underline)
         update_pbar(pbar, 'Replacing hyphens by underline')
 
     return df

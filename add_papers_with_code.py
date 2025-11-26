@@ -249,10 +249,17 @@ if __name__ == '__main__':
             seq_matcher = SequenceMatcher()
             cleaner = TextCleaner()
             similar_titles = {}
+            # Pre-compute title lengths once
+            df_title_lengths = df.title.str.len()
+            
             for k, v in papers_to_check:
                 seq_matcher.set_seq2(v['title'])
-                # TODO: change this for for loop with iterrows
-                for _, t in df.title[abs(df.title.str.len() - len(v['title'])) < 5].items():
+                title_len = len(v['title'])
+                
+                # Filter once per outer loop iteration
+                filtered_titles = df.title[abs(df_title_lengths - title_len) < 5]
+                
+                for _, t in filtered_titles.items():
                     seq_matcher.set_seq1(t)
 
                     if seq_matcher.real_quick_ratio() > 0.95 and seq_matcher.quick_ratio() > 0.95:
@@ -277,10 +284,17 @@ if __name__ == '__main__':
         similar_titles_dict = {}
         _logger.info('\nPrinting similar titles')
 
+        # Pre-filter DataFrame once to avoid repeated filtering in inner loop
+        df_title_lengths = df.title.str.len()
+
         for k, v in tqdm(papers_not_in.items(), desc='Similar titles', ncols=250):
             seq_matcher.set_seq2(v['title'])
+            title_len = len(v['title'])
+            
+            # Filter once per outer loop iteration
+            filtered_titles = df.title[abs(df_title_lengths - title_len) < 5]
 
-            for _, t in df.title[abs(df.title.str.len() - len(v['title'])) < 5].iteritems():
+            for _, t in filtered_titles.items():
                 seq_matcher.set_seq1(t)
 
                 if seq_matcher.real_quick_ratio() > 0.95 and seq_matcher.quick_ratio() > 0.95:
