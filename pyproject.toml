@@ -1,26 +1,19 @@
-[tool.poetry]
+[project]
 name = "ai-papers-cleaner"
 version = "0.1.0"
 description = "Extract text from papers PDFs and abstracts, and remove uninformative words."
 authors = ["George Araujo <george.gcac@gmail.com>"]
 license = "BSD-3"
 readme = "README.md"
-packages = [{include = "ai_papers_cleaner"}]
-
-[tool.poetry.dependencies]
-python = "^3.10"
-colorama = "^0.4.5"
-ftfy = "^6.1.1"
-ipython = "^8.5.0"
-nltk = "^3.7"
-pandas = "^1.5.0"
-pyenchant = "^3.2.2"
-pypdfium2 = "^3.4.0"
-tqdm = "^4.64.1"
-inflect = {git = "https://github.com/george-gca/inflect", branch = "main" }
-pyarrow = "^9.0.0"
-
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires-python = ">=3.12"
+dependencies = [
+    "colorama>=0.4.6",
+    "ftfy>=6.3.1",
+    "inflect>=7.5.0",
+    "nltk>=3.9.3",
+    "pandas>=3.0.1",
+    "pyarrow>=23.0.1",
+    "pyenchant>=3.3.0",
+    "pypdfium2>=5.5.0",
+    "tqdm>=4.67.3",
+]
