@@ -42,7 +42,6 @@ extract_urls=1
 clean_abstracts=1
 clean_papers=1
 # unify_papers=1
-# papers_with_code=1
 
 # uncomment these lines if you want to run only for a specific conference and year
 conference="uai"
@@ -102,9 +101,4 @@ done
 
 if [ -n "$unify_papers" ]; then
 	$run_command python unify_papers_data.py -l info
-fi
-
-if [ -n "$papers_with_code" ]; then
-    echo -e "\nAdding information from papers with code"
-    $run_command python add_papers_with_code.py -p -l info
 fi
