@@ -10,50 +10,61 @@ from tqdm.contrib.concurrent import process_map
 
 
 SUPPORTED_CONFERENCES = [
-    'aaai',
-    'acl',
-    'aistats',
-    'coling',
-    'cvpr',
-    'eacl',
-    'eccv',
-    'emnlp',
-    'findings',
-    'iccv',
-    'iclr',
-    'icml',
-    'icra',
-    'ijcai',
-    'ijcnlp',
-    'ijcv',
-    'kdd',
-    'naacl',
-    'neurips',
-    'neurips_workshop',
-    'sigchi',
-    'sigdial',
-    'siggraph',
-    'siggraph-asia',
-    'tacl',
-    'tpami',
-    'uai',
-    'wacv',
+    "aaai",
+    "acl",
+    "aistats",
+    "coling",
+    "cvpr",
+    "eacl",
+    "eccv",
+    "emnlp",
+    "findings",
+    "iccv",
+    "iclr",
+    "icml",
+    "icra",
+    "ijcai",
+    "ijcnlp",
+    "ijcv",
+    "kdd",
+    "naacl",
+    "neurips",
+    "neurips_workshop",
+    "sigchi",
+    "sigdial",
+    "siggraph",
+    "siggraph-asia",
+    "tacl",
+    "tpami",
+    "uai",
+    "wacv",
 ]
 
 
 def parallelize_dataframe(df: pd.DataFrame, func: Callable, n_processes: int = cpu_count() // 4) -> pd.DataFrame:
-    df_split = np.array_split(df, n_processes)
+    if len(df) == 0:
+        return df
+
+    n_processes = max(1, min(n_processes, len(df)))
+
+    # np.array_split(DataFrame, ...) may yield numpy arrays with recent pandas/numpy.
+    # Split row positions explicitly to guarantee DataFrame chunks for workers.
+    row_positions = np.array_split(np.arange(len(df)), n_processes)
+    df_split = [df.iloc[pos].copy() for pos in row_positions if len(pos) > 0]
+
+    if len(df_split) == 1:
+        return func(df_split[0])
+
     results = process_map(func, df_split, max_workers=n_processes)
-    df = pd.concat(results)
-    return df
+    return pd.concat(results)
 
 
 def setup_log(
-        log_level: str = 'warning',
-        log_file: str | Path = Path('run.log'),
-        file_log_level: str = 'info',
-        logs_to_silence: list[str] = [],
-        ) -> None:
+    log_level: str = "warning",
+    log_file: str | Path = Path("run.log"),
+    file_log_level: str = "info",
+    logs_to_silence: list[str] = [],
+) -> None:
     """
     Setup the logging.
 
@@ -67,7 +78,7 @@ def setup_log(
     # https://stackoverflow.com/questions/384076/how-can-i-color-python-logging-output
     # https://www.electricmonk.nl/log/2017/08/06/understanding-pythons-logging-module/
     logging.PRINT = 60
-    logging.addLevelName(60, 'PRINT')
+    logging.addLevelName(60, "PRINT")
 
     def log_print(self, message, *args, **kws):
         if self.isEnabledFor(logging.PRINT):
@@ -78,12 +89,12 @@ def setup_log(
 
     # convert log levels to int
     int_log_level = {
-        'debug': logging.DEBUG,  # 10
-        'info': logging.INFO,  # 20
-        'warning': logging.WARNING,  # 30
-        'error': logging.ERROR,  # 40
-        'critical': logging.CRITICAL,  # 50
-        'print': logging.PRINT,  # 60
+        "debug": logging.DEBUG,  # 10
+        "info": logging.INFO,  # 20
+        "warning": logging.WARNING,  # 30
+        "error": logging.ERROR,  # 40
+        "critical": logging.CRITICAL,  # 50
+        "print": logging.PRINT,  # 60
     }
 
     log_level = int_log_level[log_level]
@@ -95,13 +106,15 @@ def setup_log(
 
     # create a logging format
     if log_level >= logging.WARNING:
-        stderr_formatter = logging.Formatter('{message}', style='{')
+        stderr_formatter = logging.Formatter("{message}", style="{")
     else:
         stderr_formatter = logging.Formatter(
             # format:
             # <10 = pad with spaces if needed until it reaches 10 chars length
             # .10 = limit the length to 10 chars
-            '{name:<10.10} [{levelname:.1}] {message}', style='{')
+            "{name:<10.10} [{levelname:.1}] {message}",
+            style="{",
+        )
     stderr_handler.setFormatter(stderr_formatter)
 
     # create a file handler that have size limit
@@ -113,7 +126,8 @@ def setup_log(
 
     # https://docs.python.org/3/library/logging.html#logrecord-attributes
     file_formatter = logging.Formatter(
-        '{asctime} - {name:<12.12} {levelname:<8} {message}', datefmt='%Y-%m-%d %H:%M:%S', style='{')
+        "{asctime} - {name:<12.12} {levelname:<8} {message}", datefmt="%Y-%m-%d %H:%M:%S", style="{"
+    )
     file_handler.setFormatter(file_formatter)
 
     # add the handlers to the root logger
@@ -126,5 +140,5 @@ def setup_log(
     # create logger
     logger = logging.getLogger(__name__)
 
-    logger.info(f'Saving logs to {log_file.absolute()}')
-    logger.info(f'Log level: {logging.getLevelName(log_level)}')
+    logger.info(f"Saving logs to {log_file.absolute()}")
+    logger.info(f"Log level: {logging.getLevelName(log_level)}")
